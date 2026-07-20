@@ -5,11 +5,28 @@
 Sistem monitoring Out of Stock (OOS) untuk memantau ketersediaan stok di seluruh toko. Sistem menyediakan dashboard interaktif dengan peta, manajemen toko, upload data stok harian, dan manajemen depo.
 
 ### Tech Stack
-- **Backend:** Laravel 13.x + PHP 8.3+
-- **Frontend:** Inertia.js + React
+- **Backend:** Laravel 13.x + PHP 8.3+ (folder `backend/`)
+- **Frontend:** Vite + React + TypeScript (folder `frontend/`)
 - **Database:** MySQL
 - **Maps:** Leaflet.js (OpenStreetMap)
 - **CSS:** Tailwind CSS 4.x
+- **API:** REST JSON via Laravel API Resource
+
+### Repository Structure (Monorepo)
+```
+monitoring_oos/
+├── backend/          # Laravel API (PHP)
+│   ├── app/
+│   ├── config/
+│   ├── routes/api.php
+│   └── ...
+├── frontend/         # Vite + React + TypeScript
+│   ├── src/
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── vite.config.ts
+└── README.md
+```
 
 ---
 
@@ -123,41 +140,39 @@ Sistem monitoring Out of Stock (OOS) untuk memantau ketersediaan stok di seluruh
 
 ---
 
-## 4. API Endpoints
+## 4. API Endpoints (Laravel Backend → JSON via API Resource)
+
+Semua endpoint berada di `routes/api.php` dengan prefix `/api`. Frontend React memanggil endpoint ini via Axios/fetch.
 
 ### Auth
-- `GET /login` - Halaman login
-- `POST /login` - Proses login
-- `POST /logout` - Proses logout
+- `POST /api/login` - Login (return token)
+- `POST /api/logout` - Logout (revoke token)
 
 ### Dashboard
-- `GET /dashboard` - Dashboard peta + statistik
+- `GET /api/dashboard` - Data dashboard (statistik + stores)
 
 ### Stores
-- `GET /stores` - List toko
-- `GET /stores/{id}` - Detail toko
+- `GET /api/stores` - List toko (paginate + filter)
+- `GET /api/stores/{id}` - Detail toko + riwayat stok
+- `GET /api/stores/geojson` - Data GeoJSON untuk peta
 
 ### Stocks
-- `GET /stocks` - List stok harian
-- `GET /stocks/upload` - Form upload
-- `POST /stocks/upload` - Proses upload
-- `GET /stocks/{store}` - Riwayat stok per toko
+- `GET /api/stocks` - List stok harian (paginate + filter)
+- `POST /api/stocks/upload` - Upload file CSV/XLSX
+- `GET /api/stocks/{store}` - Riwayat stok per toko
 
 ### Depots
-- `GET /depots` - List depo
-- `GET /depots/create` - Form tambah
-- `POST /depots` - Simpan
-- `GET /depots/{id}` - Detail
-- `GET /depots/{id}/edit` - Form edit
-- `PUT /depots/{id}` - Update
-- `DELETE /depots/{id}` - Hapus
+- `GET /api/depots` - List depo
+- `POST /api/depots` - Tambah depo
+- `GET /api/depots/{id}` - Detail depo
+- `PUT /api/depots/{id}` - Update depo
+- `DELETE /api/depots/{id}` - Hapus depo
 
 ### Delivery
-- `GET /delivery/upload` - Form upload delivery
-- `POST /delivery/upload` - Proses upload delivery
+- `POST /api/delivery/upload` - Upload file delivery
 
-### Map
-- `GET /api/stores/geojson` - Data untuk peta
+### Template
+- `GET /api/template/stocks` - Download template CSV stok
 
 ---
 

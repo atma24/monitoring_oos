@@ -3,7 +3,16 @@
 ## 1. Architecture
 
 ```
-Browser (React) → Inertia.js → Laravel Backend → MySQL
+┌─────────────────────┐      REST JSON       ┌──────────────────────┐
+│  Frontend (Vite)    │  ──────────────────►  │  Backend (Laravel)   │
+│  React + TypeScript │  ◄──────────────────  │  API Resource        │
+│  /frontend/         │     Auth: Bearer      │  /backend/           │
+└─────────────────────┘                       └──────────┬───────────┘
+                                                          │
+                                                          ▼
+                                                   ┌──────────────┐
+                                                   │    MySQL     │
+                                                   └──────────────┘
 ```
 
 ---
@@ -20,8 +29,8 @@ Browser (React) → Inertia.js → Laravel Backend → MySQL
 │ │          │ ├────────────────────────────────────────┤│
 │ │  📊 Dash │ │                                        ││
 │ │  🏪 Stores│ │         CONTENT AREA                   ││
-│ │  📦 Stocks│ │                                        ││
-│ │  🚚 Delivery││   (stats cards, tables, map, forms)   ││
+│ │  📦 Stocks│ │   (stats cards, tables, map, forms)   ││
+│ │  🚚 Delivery││                                        ││
 │ │  🏭 Depots│ │                                        ││
 │ │          │ └────────────────────────────────────────┤│
 │ │  SIDEBAR │ │  Footer                                ││
@@ -30,79 +39,166 @@ Browser (React) → Inertia.js → Laravel Backend → MySQL
 └────────────────────────────────────────────────────────┘
 ```
 
+**Routing:** React Router v7 — setiap halaman adalah route terpisah.
+
 **Struktur halaman:**
-- **Sidebar** (fixed kiri, lebar 256px) — navigasi utama
+- **Sidebar** (fixed kiri, lebar 256px) — navigasi utama via `<NavLink>`
 - **Header** (fixed atas, offset kiri 256px) — judul halaman + dropdown user
 - **Content** (padding 24px) — konten utama per halaman
 - **Footer** (opsional) — copyright
 
 ### 2.2 Sidebar Component
 
-```jsx
-<aside className="w-64 bg-white border-r h-screen fixed left-0 top-0 z-30">
-  <div className="h-16 flex items-center px-6 border-b">
-    <span className="text-xl font-bold text-blue-600">OOS Monitor</span>
-  </div>
-  <nav className="p-4 space-y-1">
-    <NavItem icon="📊" label="Dashboard" href={route('dashboard')} />
-    <NavItem icon="🏪" label="Stores" href={route('stores.index')} />
-    <NavItem icon="📦" label="Stocks" href={route('stocks.index')} />
-    <NavItem icon="🚚" label="Delivery" href={route('delivery.upload')} />
-    <NavItem icon="🏭" label="Depots" href={route('depots.index')} />
-  </nav>
-</aside>
+```tsx
+import { NavLink } from 'react-router-dom';
+
+const navItems = [
+  { icon: '📊', label: 'Dashboard', to: '/' },
+  { icon: '🏪', label: 'Stores', to: '/stores' },
+  { icon: '📦', label: 'Stocks', to: '/stocks' },
+  { icon: '🚚', label: 'Delivery', to: '/delivery' },
+  { icon: '🏭', label: 'Depots', to: '/depots' },
+];
+
+export default function Sidebar() {
+  return (
+    <aside className="w-64 bg-white border-r h-screen fixed left-0 top-0 z-30">
+      <div className="h-16 flex items-center px-6 border-b">
+        <span className="text-xl font-bold text-blue-600">OOS Monitor</span>
+      </div>
+      <nav className="p-4 space-y-1">
+        {navItems.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-colors ${
+                isActive
+                  ? 'bg-blue-50 text-blue-600 font-medium'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`
+            }
+          >
+            <span>{item.icon}</span>
+            <span>{item.label}</span>
+          </NavLink>
+        ))}
+      </nav>
+    </aside>
+  );
+}
 ```
 
 ### 2.3 Header Component
 
-```jsx
-<header className="h-16 bg-white border-b flex items-center justify-between px-6 ml-64">
-  <h1 className="text-lg font-semibold text-gray-700">{pageTitle}</h1>
-  <div className="flex items-center gap-3">
-    <span className="text-sm text-gray-500">{user.name}</span>
-    <Dropdown>
-      <Dropdown.Link href={route('profile.edit')}>Profile</Dropdown.Link>
-      <Dropdown.Link href={route('logout')} method="post" as="button">
-        Log Out
-      </Dropdown.Link>
-    </Dropdown>
-  </div>
-</header>
+```tsx
+import { useAuth } from '@/hooks/useAuth';
+import { useLocation } from 'react-router-dom';
+
+const pageTitles: Record<string, string> = {
+  '/': 'Dashboard',
+  '/stores': 'Stores',
+  '/stocks': 'Stocks',
+  '/delivery': 'Delivery',
+  '/depots': 'Depots',
+};
+
+export default function Header() {
+  const { user, logout } = useAuth();
+  const location = useLocation();
+  const title = pageTitles[location.pathname] || 'OOS Monitor';
+
+  return (
+    <header className="h-16 bg-white border-b flex items-center justify-between px-6 ml-64">
+      <h1 className="text-lg font-semibold text-gray-700">{title}</h1>
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-gray-500">{user?.name}</span>
+        <button
+          onClick={logout}
+          className="text-sm text-red-600 hover:text-red-800"
+        >
+          Log Out
+        </button>
+      </div>
+    </header>
+  );
+}
 ```
 
 ### 2.4 Card Design
 
 Statistik cards (grid 2-6 kolom):
 
-```jsx
-<div className="bg-white rounded-xl shadow-sm border p-4 flex items-center gap-4">
-  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 text-xl">
-    🏪
-  </div>
-  <div>
-    <p className="text-xs text-gray-500 uppercase tracking-wide">Total Toko</p>
-    <p className="text-2xl font-bold text-gray-800">{stats.total_stores}</p>
-  </div>
-</div>
+```tsx
+interface StatCardProps {
+  icon: string;
+  label: string;
+  value: string | number;
+  color?: string;
+}
+
+export default function StatCard({ icon, label, value, color = 'blue' }: StatCardProps) {
+  return (
+    <div className="bg-white rounded-xl shadow-sm border p-4 flex items-center gap-4">
+      <div className={`w-12 h-12 bg-${color}-100 rounded-lg flex items-center justify-center text-${color}-600 text-xl`}>
+        {icon}
+      </div>
+      <div>
+        <p className="text-xs text-gray-500 uppercase tracking-wide">{label}</p>
+        <p className="text-2xl font-bold text-gray-800">{value}</p>
+      </div>
+    </div>
+  );
+}
 ```
 
 ### 2.5 Table Design
 
-```jsx
-<div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-  <table className="w-full text-sm">
-    <thead>
-      <tr className="bg-gray-50 border-b">
-        <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Kolom</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr className="border-b last:border-0 hover:bg-gray-50">
-        <td className="px-4 py-3">{value}</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+```tsx
+interface Column<T> {
+  key: keyof T;
+  label: string;
+  render?: (value: T[keyof T], row: T) => React.ReactNode;
+}
+
+interface TableProps<T> {
+  columns: Column<T>[];
+  data: T[];
+  onRowClick?: (row: T) => void;
+}
+
+export default function Table<T extends Record<string, unknown>>({ columns, data, onRowClick }: TableProps<T>) {
+  return (
+    <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="bg-gray-50 border-b">
+            {columns.map((col) => (
+              <th key={String(col.key)} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                {col.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((row, i) => (
+            <tr
+              key={i}
+              className="border-b last:border-0 hover:bg-gray-50 cursor-pointer"
+              onClick={() => onRowClick?.(row)}
+            >
+              {columns.map((col) => (
+                <td key={String(col.key)} className="px-4 py-3">
+                  {col.render ? col.render(row[col.key], row) : String(row[col.key])}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 ```
 
 ### 2.6 Page Layout per Fitur
@@ -173,27 +269,139 @@ Statistik cards (grid 2-6 kolom):
 | Badge TERKIRIM | `bg-green-100 text-green-800` |
 | Badge BELUM TERKIRIM | `bg-orange-100 text-orange-800` |
 
-### 2.8 Pages Structure
+### 2.8 Folder Structure (Frontend)
 
 ```
-resources/js/Pages/
-├── Dashboard.jsx            # Peta + statistik + tabel
-├── Auth/                    # Breeze auth pages
-├── Profile/                 # Breeze profile pages
-├── Stores/
-│   ├── Index.jsx            # List toko + filter
-│   └── Show.jsx             # Detail toko + riwayat stok
-├── Stocks/
-│   ├── Index.jsx            # Tabel stok + filter
-│   ├── Upload.jsx           # Form upload stok
-│   └── Show.jsx             # Riwayat stok per toko
-├── Delivery/
-│   └── Upload.jsx           # Form upload delivery
-└── Depots/
-    ├── Index.jsx            # List depo
-    ├── Create.jsx           # Tambah depo
-    ├── Show.jsx             # Detail depo
-    └── Edit.jsx             # Edit depo
+frontend/src/
+├── main.tsx                 # Entry point + React Router setup
+├── App.tsx                  # Layout wrapper (Sidebar + Header + Outlet)
+├── types/
+│   ├── store.ts             # Store, StockRecord, DeliveryStatus types
+│   ├── depot.ts             # Depot types
+│   ├── api.ts               # API response types (paginated, resources)
+│   └── index.ts             # Re-export
+├── api/
+│   ├── client.ts            # Axios instance + interceptors
+│   ├── stores.ts            # Store API calls
+│   ├── stocks.ts            # Stock API calls
+│   ├── depots.ts            # Depot API calls
+│   └── delivery.ts          # Delivery API calls
+├── hooks/
+│   ├── useAuth.ts           # Auth context + login/logout
+│   ├── useStores.ts         # React Query hooks for stores
+│   ├── useStocks.ts         # React Query hooks for stocks
+│   └── useDepots.ts         # React Query hooks for depots
+├── components/
+│   ├── Layout.tsx            # Sidebar + Header + <Outlet />
+│   ├── Sidebar.tsx           # NavLink navigasi
+│   ├── Header.tsx            # Page title + user dropdown
+│   ├── StatCard.tsx          # Kartu statistik
+│   ├── Table.tsx             # Generic table component
+│   ├── Map.tsx               # Leaflet map wrapper
+│   ├── FileUpload.tsx        # Drag & drop upload component
+│   ├── Pagination.tsx        # Pagination component
+│   └── Badge.tsx             # Category/OOS/Delivery badge
+├── pages/
+│   ├── Dashboard.tsx         # Peta + statistik + tabel
+│   ├── Login.tsx             # Halaman login
+│   ├── Stores/
+│   │   ├── StoreList.tsx     # List toko + filter
+│   │   └── StoreDetail.tsx   # Detail toko + riwayat stok
+│   ├── Stocks/
+│   │   ├── StockList.tsx     # Tabel stok + filter
+│   │   ├── StockUpload.tsx   # Form upload stok
+│   │   └── StockDetail.tsx   # Riwayat stok per toko
+│   ├── Delivery/
+│   │   └── DeliveryUpload.tsx # Form upload delivery
+│   └── Depots/
+│       ├── DepotList.tsx     # List depo
+│       ├── DepotCreate.tsx   # Tambah depo
+│       ├── DepotDetail.tsx   # Detail depo
+│       └── DepotEdit.tsx     # Edit depo
+├── lib/
+│   └── utils.ts             # Helper functions
+├── tailwind.config.ts
+├── tsconfig.json
+└── vite.config.ts
+```
+
+### 2.9 TypeScript Type Definitions
+
+```ts
+// frontend/src/types/store.ts
+export interface Store {
+  id: number;
+  sap_id: string;
+  outlet_id: string;
+  outlet_name: string;
+  account: string | null;
+  region: string | null;
+  source: string | null;
+  supplier: string | null;
+  category: 'RED' | 'YELLOW' | 'GREEN' | 'NO_DATA';
+  stock: number;
+  oos: 'YES' | 'NO';
+  dsi: number;
+  latest_delivery: 'DELIVERED' | 'UNDELIVERED' | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// frontend/src/types/stock.ts
+export interface StockRecord {
+  id: number;
+  store_id: number;
+  sap_id: string;
+  stockdate: string;
+  brand: string | null;
+  stock: number;
+  stockc: number;
+  sellout: number;
+  dsi: number;
+  category: 'RED' | 'YELLOW' | 'GREEN';
+  jwk: string | null;
+  oos: 'YES' | 'NO';
+  og_urgent: number;
+  og_total: number;
+  store?: Store;
+}
+
+// frontend/src/types/depot.ts
+export interface Depot {
+  id: number;
+  name: string;
+  address: string | null;
+  contact_person: string | null;
+  contact_phone: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// frontend/src/types/delivery.ts
+export interface DeliveryStatus {
+  id: number;
+  store_id: number;
+  sap_id: string;
+  status: 'DELIVERED' | 'UNDELIVERED';
+  check_date: string;
+  store?: Store;
+}
+
+// frontend/src/types/api.ts
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
+}
+
+export interface ApiError {
+  message: string;
+  errors?: Record<string, string[]>;
+}
 ```
 
 ---
@@ -388,21 +596,149 @@ class DeliveryStatus extends Model
 
 ---
 
-## 5. Controllers
+## 5. API Resources
 
-### 5.1 DashboardController.php
+API Resources mentransform Eloquent model ke JSON response terstruktur untuk frontend.
+
+### 5.1 StoreResource.php
 ```php
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Resources;
 
-use App\Models\Store;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class StoreResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'sap_id' => $this->sap_id,
+            'outlet_id' => $this->outlet_id,
+            'outlet_name' => $this->outlet_name,
+            'account' => $this->account,
+            'region' => $this->region,
+            'source' => $this->source,
+            'supplier' => $this->supplier,
+            'category' => $this->latestStock?->category ?? 'NO_DATA',
+            'stock' => $this->latestStock?->stock ?? 0,
+            'oos' => $this->latestStock?->oos ?? 'NO',
+            'dsi' => $this->latestStock?->dsi ?? 0,
+            'latest_delivery' => $this->latestDelivery?->status ?? null,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+        ];
+    }
+}
+```
+
+### 5.2 StockRecordResource.php
+```php
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class StockRecordResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'store_id' => $this->store_id,
+            'sap_id' => $this->sap_id,
+            'stockdate' => $this->stockdate,
+            'brand' => $this->brand,
+            'stock' => $this->stock,
+            'stockc' => $this->stockc,
+            'sellout' => $this->sellout,
+            'dsi' => (float) $this->dsi,
+            'category' => $this->category,
+            'jwk' => $this->jwk,
+            'oos' => $this->oos,
+            'og_urgent' => $this->og_urgent,
+            'og_total' => $this->og_total,
+            'store' => new StoreResource($this->whenLoaded('store')),
+        ];
+    }
+}
+```
+
+### 5.3 DepotResource.php
+```php
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class DepotResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'address' => $this->address,
+            'contact_person' => $this->contact_person,
+            'contact_phone' => $this->contact_phone,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+        ];
+    }
+}
+```
+
+### 5.4 DeliveryStatusResource.php
+```php
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class DeliveryStatusResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'store_id' => $this->store_id,
+            'sap_id' => $this->sap_id,
+            'status' => $this->status,
+            'check_date' => $this->check_date,
+            'store' => new StoreResource($this->whenLoaded('store')),
+        ];
+    }
+}
+```
+
+---
+
+## 6. Controllers (API)
+
+Controllers return JSON via API Resource, tidak lagi menggunakan Inertia.
+
+### 6.1 DashboardController.php
+```php
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Resources\StoreResource;
+use App\Models\Store;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $date = $request->input('date', now()->toDateString());
 
@@ -422,42 +758,35 @@ class DashboardController extends Controller
             })->count(),
         ];
 
-        $stores = Store::with('latestStock')->get()->map(function ($store) {
-            return [
-                'id' => $store->id,
-                'sap_id' => $store->sap_id,
-                'name' => $store->outlet_name,
-                'category' => $store->latestStock?->category ?? 'NO_DATA',
-                'stock' => $store->latestStock?->stock ?? 0,
-                'oos' => $store->latestStock?->oos ?? 'NO',
-                'dsi' => $store->latestStock?->dsi ?? 0,
-            ];
-        });
+        $stores = StoreResource::collection(
+            Store::with('latestStock')->get()
+        );
 
-        return Inertia::render('Dashboard', [
+        return response()->json([
             'stats' => $stats,
             'stores' => $stores,
-            'selectedDate' => $date,
+            'selected_date' => $date,
         ]);
     }
 }
 ```
 
-### 5.2 StoreController.php
+### 6.2 StoreController.php
 ```php
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Resources\StoreResource;
 use App\Models\Store;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 
 class StoreController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $query = Store::with('latestStock');
+        $query = Store::with('latestStock', 'latestDelivery');
 
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
@@ -471,42 +800,74 @@ class StoreController extends Controller
             $query->where('region', $request->region);
         }
 
-        $stores = $query->orderBy('outlet_name')->paginate(20)->withQueryString();
+        $stores = $query->orderBy('outlet_name')->paginate(20);
 
-        return Inertia::render('Stores/Index', [
-            'stores' => $stores,
-            'filters' => $request->only(['search', 'region']),
+        return response()->json([
+            'data' => StoreResource::collection($stores),
+            'meta' => [
+                'current_page' => $stores->currentPage(),
+                'last_page' => $stores->lastPage(),
+                'per_page' => $stores->perPage(),
+                'total' => $stores->total(),
+            ],
         ]);
     }
 
-    public function show(Store $store)
+    public function show(Store $store): JsonResponse
     {
         $store->load(['stockRecords' => function ($q) {
             $q->orderByDesc('stockdate')->limit(30);
         }]);
 
-        return Inertia::render('Stores/Show', [
-            'store' => $store,
+        return response()->json([
+            'data' => new StoreResource($store),
+            'stock_history' => $store->stockRecords,
+        ]);
+    }
+
+    public function geojson(Request $request): JsonResponse
+    {
+        // Return data untuk Leaflet map
+        $stores = Store::with('latestStock')->get();
+
+        $features = $stores->map(fn ($store) => [
+            'type' => 'Feature',
+            'geometry' => [
+                'type' => 'Point',
+                'coordinates' => [$store->longitude, $store->latitude],
+            ],
+            'properties' => [
+                'sap_id' => $store->sap_id,
+                'name' => $store->outlet_name,
+                'category' => $store->latestStock?->category ?? 'NO_DATA',
+                'oos' => $store->latestStock?->oos ?? 'NO',
+            ],
+        ]);
+
+        return response()->json([
+            'type' => 'FeatureCollection',
+            'features' => $features,
         ]);
     }
 }
 ```
 
-### 5.3 StockController.php
+### 6.3 StockController.php
 ```php
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Resources\StockRecordResource;
 use App\Models\StockRecord;
 use App\Models\Store;
 use App\Services\StockImportService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 
 class StockController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $query = StockRecord::with('store');
 
@@ -519,21 +880,20 @@ class StockController extends Controller
         if ($request->filled('oos'))
             $query->where('oos', $request->oos);
 
-        $records = $query->orderByDesc('stockdate')
-            ->paginate(20)->withQueryString();
+        $records = $query->orderByDesc('stockdate')->paginate(20);
 
-        return Inertia::render('Stocks/Index', [
-            'records' => $records,
-            'filters' => $request->only(['stockdate', 'store_id', 'category', 'oos']),
+        return response()->json([
+            'data' => StockRecordResource::collection($records),
+            'meta' => [
+                'current_page' => $records->currentPage(),
+                'last_page' => $records->lastPage(),
+                'per_page' => $records->perPage(),
+                'total' => $records->total(),
+            ],
         ]);
     }
 
-    public function upload()
-    {
-        return Inertia::render('Stocks/Upload');
-    }
-
-    public function processUpload(Request $request)
+    public function upload(Request $request): JsonResponse
     {
         $request->validate([
             'file' => 'required|file|mimes:csv,xlsx,xls|max:10240',
@@ -541,45 +901,118 @@ class StockController extends Controller
 
         $result = app(StockImportService::class)->import($request->file('file'));
 
-        return back()->with([
-            'import_result' => $result,
-            'success' => "Upload selesai. Berhasil: {$result['success']}, Gagal: {$result['failed']}",
+        return response()->json([
+            'message' => "Upload selesai. Berhasil: {$result['success']}, Gagal: {$result['failed']}",
+            'data' => $result,
         ]);
     }
 
-    public function show(Store $store)
+    public function show(Store $store): JsonResponse
     {
         $records = $store->stockRecords()
             ->orderByDesc('stockdate')->limit(90)->get();
 
-        return Inertia::render('Stocks/Show', [
-            'store' => $store,
-            'records' => $records,
+        return response()->json([
+            'data' => StockRecordResource::collection($records),
+            'store' => new \App\Http\Resources\StoreResource($store),
         ]);
     }
 }
 ```
 
-### 5.4 DeliveryController.php
+### 6.4 DepotController.php
 ```php
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
-use App\Models\DeliveryStatus;
-use App\Models\Store;
-use App\Services\DeliveryImportService;
+use App\Http\Resources\DepotResource;
+use App\Models\Depot;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
+
+class DepotController extends Controller
+{
+    public function index(): JsonResponse
+    {
+        $depots = Depot::orderBy('name')->paginate(20);
+
+        return response()->json([
+            'data' => DepotResource::collection($depots),
+            'meta' => [
+                'current_page' => $depots->currentPage(),
+                'last_page' => $depots->lastPage(),
+                'per_page' => $depots->perPage(),
+                'total' => $depots->total(),
+            ],
+        ]);
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:depots',
+            'address' => 'nullable|string',
+            'contact_person' => 'nullable|string|max:255',
+            'contact_phone' => 'nullable|string|max:50',
+        ]);
+
+        $depot = Depot::create($validated);
+
+        return response()->json([
+            'data' => new DepotResource($depot),
+            'message' => 'Depo berhasil ditambahkan',
+        ], 201);
+    }
+
+    public function show(Depot $depot): JsonResponse
+    {
+        return response()->json([
+            'data' => new DepotResource($depot),
+        ]);
+    }
+
+    public function update(Request $request, Depot $depot): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:depots,name,' . $depot->id,
+            'address' => 'nullable|string',
+            'contact_person' => 'nullable|string|max:255',
+            'contact_phone' => 'nullable|string|max:50',
+        ]);
+
+        $depot->update($validated);
+
+        return response()->json([
+            'data' => new DepotResource($depot),
+            'message' => 'Depo berhasil diupdate',
+        ]);
+    }
+
+    public function destroy(Depot $depot): JsonResponse
+    {
+        $depot->delete();
+
+        return response()->json([
+            'message' => 'Depo berhasil dihapus',
+        ]);
+    }
+}
+```
+
+### 6.5 DeliveryController.php
+```php
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Services\DeliveryImportService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class DeliveryController extends Controller
 {
-    public function upload()
-    {
-        return Inertia::render('Delivery/Upload');
-    }
-
-    public function processUpload(Request $request)
+    public function upload(Request $request): JsonResponse
     {
         $request->validate([
             'file' => 'required|file|mimes:xlsx,xls|max:10240',
@@ -587,9 +1020,9 @@ class DeliveryController extends Controller
 
         $result = app(DeliveryImportService::class)->import($request->file('file'));
 
-        return back()->with([
-            'import_result' => $result,
-            'success' => "Upload selesai. Terkirim: {$result['delivered']}, Belum Terkirim: {$result['undelivered']}",
+        return response()->json([
+            'message' => "Upload selesai. Terkirim: {$result['delivered']}, Belum Terkirim: {$result['undelivered']}",
+            'data' => $result,
         ]);
     }
 }
@@ -597,7 +1030,7 @@ class DeliveryController extends Controller
 
 ---
 
-## 6. StockImportService.php
+## 7. StockImportService.php
 
 ```php
 <?php
@@ -719,7 +1152,48 @@ class StockImportService
 
 ---
 
-## 7. DeliveryImportService.php
+## 8. Routes (api.php)
+
+Semua endpoint berada di `routes/api.php` dengan prefix `/api`. Tidak ada web routes untuk halaman — frontend adalah SPA terpisah.
+
+```php
+<?php
+
+use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\DeliveryController;
+use App\Http\Controllers\Api\DepotController;
+use App\Http\Controllers\Api\StockController;
+use App\Http\Controllers\Api\StoreController;
+use Illuminate\Support\Facades\Route;
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('dashboard', [DashboardController::class, 'index']);
+
+    Route::get('stores', [StoreController::class, 'index']);
+    Route::get('stores/geojson', [StoreController::class, 'geojson']);
+    Route::get('stores/{store}', [StoreController::class, 'show']);
+
+    Route::get('stocks', [StockController::class, 'index']);
+    Route::post('stocks/upload', [StockController::class, 'upload']);
+    Route::get('stocks/{store}', [StockController::class, 'show']);
+
+    Route::get('depots', [DepotController::class, 'index']);
+    Route::post('depots', [DepotController::class, 'store']);
+    Route::get('depots/{depot}', [DepotController::class, 'show']);
+    Route::put('depots/{depot}', [DepotController::class, 'update']);
+    Route::delete('depots/{depot}', [DepotController::class, 'destroy']);
+
+    Route::post('delivery/upload', [DeliveryController::class, 'upload']);
+});
+
+// Auth (tanpa middleware sanctum)
+Route::post('login', [AuthController::class, 'login']);
+Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+```
+
+---
+
+## 9. DeliveryImportService.php
 
 ```php
 <?php
@@ -798,41 +1272,7 @@ class DeliveryImportService
 
 ---
 
-## 8. Routes (web.php)
-
-```php
-<?php
-
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\DeliveryController;
-use App\Http\Controllers\DepotController;
-use App\Http\Controllers\StockController;
-use App\Http\Controllers\StoreController;
-use Illuminate\Support\Facades\Route;
-
-Route::middleware('auth')->group(function () {
-    Route::get('/', fn () => redirect()->route('dashboard'));
-    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
-    Route::get('stores', [StoreController::class, 'index'])->name('stores.index');
-    Route::get('stores/{store}', [StoreController::class, 'show'])->name('stores.show');
-
-    Route::get('stocks', [StockController::class, 'index'])->name('stocks.index');
-    Route::get('stocks/upload', [StockController::class, 'upload'])->name('stocks.upload');
-    Route::post('stocks/upload', [StockController::class, 'processUpload'])->name('stocks.process-upload');
-    Route::get('stocks/{store}', [StockController::class, 'show'])->name('stocks.show');
-
-    Route::resource('depots', DepotController::class)->except(['show']);
-    Route::get('depots/{depot}', [DepotController::class, 'show'])->name('depots.show');
-
-    Route::get('delivery/upload', [DeliveryController::class, 'upload'])->name('delivery.upload');
-    Route::post('delivery/upload', [DeliveryController::class, 'processUpload'])->name('delivery.process-upload');
-});
-```
-
----
-
-## 9. CSV Template
+## 10. CSV Template
 
 ```
 sap_id,outlet_id,outlet_name,account,region,source,supplier,brand,stockdate,stock,stockc,sellout,DSI,Category,jwk,oos,og_urgent,og_total
@@ -842,7 +1282,7 @@ sap_id,outlet_id,outlet_name,account,region,source,supplier,brand,stockdate,stoc
 
 ---
 
-## 10. Delivery Upload (data adop delivery.xlsx)
+## 11. Delivery Upload (data adop delivery.xlsx)
 
 File delivery dari SAP dengan struktur kolom:
 - `Cust ID` → sap_id di stores
