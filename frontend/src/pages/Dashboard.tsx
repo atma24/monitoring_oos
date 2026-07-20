@@ -1,45 +1,75 @@
-import { useQuery } from '@tanstack/react-query'
-import client from '../api/client'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import StatCard from '../components/StatCard'
+import Badge from '../components/Badge'
+import Map from '../components/Map'
+import MainCard from '../components/MainCard'
+import { fetchDashboard } from '../api/dashboard'
+import { getMapPoints } from '../lib/mock-data'
 import type { DashboardData } from '../types'
 
+const badgeVariant = (cat: string) => {
+  if (cat === 'RED') return 'red'
+  if (cat === 'YELLOW') return 'yellow'
+  if (cat === 'GREEN') return 'green'
+  return 'gray'
+}
+
 export default function Dashboard() {
-  const { data, isLoading } = useQuery({
-    queryKey: ['dashboard'],
-    queryFn: () => client.get<DashboardData>('/dashboard').then((r) => r.data),
-  })
+  const [data, setData] = useState<DashboardData | null>(null)
+  const navigate = useNavigate()
 
-  if (isLoading) return <div>Loading...</div>
+  useEffect(() => {
+    fetchDashboard().then(setData)
+  }, [])
 
-  const stats = data?.stats
+  if (!data) return <div className="text-[#8996a4]">Loading dashboard...</div>
+
+  const topOos = [...data.stores]
+    .filter((s) => s.oos === 'YES')
+    .sort((a, b) => b.dsi - a.dsi)
+    .slice(0, 10)
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-6 gap-4">
-        <StatCard icon="🏪" label="Total Toko" value={stats?.total_stores ?? 0} />
-        <StatCard icon="❗" label="OOS" value={stats?.oos_count ?? 0} color="red" />
-        <StatCard icon="🔴" label="RED" value={stats?.red_count ?? 0} color="red" />
-        <StatCard icon="🟡" label="YELLOW" value={stats?.yellow_count ?? 0} color="yellow" />
-        <StatCard icon="🟢" label="GREEN" value={stats?.green_count ?? 0} color="green" />
-        <StatCard icon="🚫" label="Blm Kirim" value={0} color="orange" />
+        <StatCard icon="🏪" label="Total Toko" value={data.stats.total_stores} />
+        <StatCard icon="❗" label="OOS" value={data.stats.oos_count} />
+        <StatCard icon="🔴" label="RED" value={data.stats.red_count} />
+        <StatCard icon="🟡" label="YELLOW" value={data.stats.yellow_count} />
+        <StatCard icon="🟢" label="GREEN" value={data.stats.green_count} />
+        <StatCard icon="🚫" label="Blm Kirim" value="15" />
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border p-6">
-        <p className="text-gray-500 text-center py-12">Peta Leaflet.js akan muncul di sini</p>
-      </div>
-    </div>
-  )
-}
+      <MainCard>
+        <Map points={getMapPoints(data.stores)} height="450px" />
+      </MainCard>
 
-function StatCard({ icon, label, value, color = 'blue' }: { icon: string; label: string; value: number; color?: string }) {
-  return (
-    <div className="bg-white rounded-xl shadow-sm border p-4 flex items-center gap-4">
-      <div className={`w-12 h-12 bg-${color}-100 rounded-lg flex items-center justify-center text-${color}-600 text-xl`}>
-        {icon}
-      </div>
-      <div>
-        <p className="text-xs text-gray-500 uppercase tracking-wide">{label}</p>
-        <p className="text-2xl font-bold text-gray-800">{value}</p>
-      </div>
+      <MainCard title="Top 10 Toko OOS">
+        <div className="overflow-x-auto">
+          <table className="pc-table w-full text-sm">
+            <thead>
+              <tr>
+                {['SAP ID', 'Nama Toko', 'Region', 'Stock', 'DSI', 'Category'].map((h) => (
+                  <th key={h}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {topOos.map((s) => (
+                <tr key={s.id} onClick={() => navigate(`/stores/${s.id}`)} className="cursor-pointer">
+                  <td className="font-mono text-xs">{s.sap_id}</td>
+                  <td className="text-[#262626] font-medium">{s.outlet_name}</td>
+                  <td>{s.region}</td>
+                  <td>{s.stock}</td>
+                  <td>{s.dsi}</td>
+                  <td><Badge variant={badgeVariant(s.category)}>{s.category}</Badge></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </MainCard>
     </div>
   )
 }

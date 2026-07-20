@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 
 const navItems = [
   { icon: '📊', label: 'Dashboard', to: '/' },
@@ -9,29 +9,28 @@ const navItems = [
 ]
 
 export default function Sidebar() {
+  const location = useLocation()
+
   return (
-    <aside className="w-64 bg-white border-r h-screen fixed left-0 top-0 z-30">
-      <div className="h-16 flex items-center px-6 border-b">
-        <span className="text-xl font-bold text-blue-600">OOS Monitor</span>
+    <aside className="pc-sidebar">
+      <div className="m-header">
+        <span className="text-white text-lg font-light tracking-wide">OOS Monitor</span>
       </div>
-      <nav className="p-4 space-y-1">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-colors ${
-                isActive
-                  ? 'bg-blue-50 text-blue-600 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`
-            }
-          >
-            <span>{item.icon}</span>
-            <span>{item.label}</span>
-          </NavLink>
-        ))}
-      </nav>
+      <div className="navbar-content">
+        <ul className="pc-navbar">
+          {navItems.map((item) => {
+            const isActive = item.to === '/' ? location.pathname === '/' : location.pathname.startsWith(item.to)
+            return (
+              <li key={item.to} className={`pc-item ${isActive ? 'active' : ''}`}>
+                <NavLink to={item.to} className="pc-link">
+                  <span className="pc-micon">{item.icon}</span>
+                  <span className="pc-mtext">{item.label}</span>
+                </NavLink>
+              </li>
+            )
+          })}
+        </ul>
+      </div>
     </aside>
   )
 }

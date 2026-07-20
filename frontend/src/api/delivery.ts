@@ -1,10 +1,5 @@
-import client from './client'
+import { mockApi } from '../lib/mock-data'
 
 export async function uploadDelivery(file: File) {
-  const form = new FormData()
-  form.append('file', file)
-  const { data } = await client.post('/delivery/upload', form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
-  return data
+  return mockApi.uploadDelivery(file)
 }

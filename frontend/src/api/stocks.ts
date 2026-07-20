@@ -1,21 +1,14 @@
-import client from './client'
-import type { StockRecord, PaginatedResponse } from '../types'
+import { mockApi } from '../lib/mock-data'
+import type { StockRecord } from '../types'
 
-export async function fetchStocks(params?: Record<string, string>) {
-  const { data } = await client.get<PaginatedResponse<StockRecord>>('/stocks', { params })
-  return data
+export async function fetchStocks(params?: { stockdate?: string; category?: string; oos?: string; page?: number }) {
+  return mockApi.getStocks(params)
 }
 
 export async function fetchStockHistory(storeId: number) {
-  const { data } = await client.get<{ data: StockRecord[]; store: unknown }>(`/stocks/${storeId}`)
-  return data
+  return mockApi.getStockHistory(storeId) as Promise<{ data: StockRecord[]; store: any }>
 }
 
 export async function uploadStock(file: File) {
-  const form = new FormData()
-  form.append('file', file)
-  const { data } = await client.post('/stocks/upload', form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
-  return data
+  return mockApi.uploadStock(file)
 }

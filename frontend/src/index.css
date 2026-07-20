@@ -1,1 +1,251 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+@theme {
+  --color-sidebar-bg: #3f4d67;
+  --color-sidebar-text: #a9b7d0;
+  --color-sidebar-active: #04a9f5;
+  --color-sidebar-hover: rgba(0, 0, 0, 0.1);
+  --color-body-bg: #f4f7fa;
+  --color-heading: #262626;
+  --color-body: #888;
+  --color-border: #f1f1f1;
+  --color-table-header-bg: rgba(244, 247, 250, 0.5);
+  --color-table-header-text: #262626;
+  --color-primary: #04a9f5;
+  --color-primary-light: #d6f0fd;
+  --color-card-shadow: 0 1px 20px 0 rgba(69, 90, 100, 0.08);
+  --font-family-sans: 'Open Sans', sans-serif;
+  --font-size-base: 0.875rem;
+}
+
+body {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 0.875rem;
+  color: #888;
+  background-color: #f4f7fa;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #bec8d0; border-radius: 3px; }
+
+/* Leaflet z-index fix */
+.leaflet-container { z-index: 0; }
+
+/* ========== Datta Able Layout ========== */
+
+.pc-sidebar {
+  background: #3f4d67;
+  width: 264px;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1026;
+  overflow: hidden;
+  box-shadow: 1px 0 20px 0 #3f4d67;
+}
+
+.pc-sidebar .m-header {
+  height: 74px;
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+}
+
+.pc-sidebar .navbar-content {
+  height: calc(100vh - 74px);
+  padding: 10px 0;
+  overflow-y: auto;
+}
+
+.pc-sidebar ul { list-style: none; padding-left: 0; margin-bottom: 0; }
+
+.pc-sidebar .pc-navbar > .pc-item {
+  position: relative;
+}
+
+.pc-sidebar .pc-navbar > .pc-item::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 3px;
+  background: transparent;
+  transition: background 0.2s;
+}
+
+.pc-sidebar .pc-navbar > .pc-item:hover,
+.pc-sidebar .pc-navbar > .pc-item.active {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.pc-sidebar .pc-navbar > .pc-item.active::before {
+  background: #04a9f5;
+}
+
+.pc-sidebar .pc-navbar > .pc-item:hover .pc-link,
+.pc-sidebar .pc-navbar > .pc-item.active .pc-link {
+  color: #fff;
+  font-weight: 500;
+}
+
+.pc-link {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  color: #a9b7d0;
+  font-size: 14px;
+  font-weight: 400;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.pc-link:hover { color: #fff; }
+
+.pc-micon {
+  margin-right: 15px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+/* Header */
+.pc-header {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  min-height: 74px;
+  box-shadow: none;
+  position: fixed;
+  left: 264px;
+  right: 0;
+  top: 0;
+  z-index: 1025;
+  display: flex;
+  align-items: center;
+}
+
+.pc-header .header-wrapper {
+  display: flex;
+  align-items: center;
+  padding: 0 25px;
+  flex-grow: 1;
+}
+
+/* Container */
+.pc-container {
+  position: relative;
+  top: 74px;
+  margin-left: 264px;
+  min-height: calc(100vh - 140px);
+}
+
+.pc-container .pc-content {
+  padding: 20px 40px;
+}
+
+/* Card */
+.pc-card {
+  background: #fff;
+  border-radius: 0;
+  box-shadow: 0 1px 20px 0 rgba(69, 90, 100, 0.08);
+  margin-bottom: 24px;
+}
+
+.pc-card .pc-card-header {
+  padding: 25px 25px 0;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.pc-card .pc-card-header h5 {
+  margin-bottom: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #262626;
+}
+
+.pc-card .pc-card-body {
+  padding: 25px;
+}
+
+.pc-card .pc-card-body.p-0-table {
+  padding: 0;
+}
+
+/* Table */
+.pc-table thead th {
+  padding: 0.9rem 0.75rem;
+  border-bottom: 1px solid #f1f1f1;
+  font-size: 13px;
+  color: #262626;
+  background: rgba(244, 247, 250, 0.5);
+  text-transform: uppercase;
+  font-weight: 600;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.pc-table tbody td {
+  padding: 0.7rem 0.75rem;
+  border-top: 1px solid #f1f1f1;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.pc-table tbody tr:hover {
+  background-color: rgba(4, 169, 245, 0.03);
+}
+
+.pc-table tbody tr {
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.pc-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+/* Badge Datta style */
+.badge-light-red { background: #fde2e2; color: #f44236; }
+.badge-light-yellow { background: #fef5d8; color: #f4c22b; }
+.badge-light-green { background: #d2f9ed; color: #1de9b6; }
+.badge-light-orange { background: #ffe5d0; color: #fd7e14; }
+.badge-light-gray { background: #f0f2f4; color: #8996a4; }
+.badge-light-blue { background: #d6f0fd; color: #04a9f5; }
+
+/* Button */
+.btn-primary {
+  background: #04a9f5;
+  color: #fff;
+  border: 1px solid #04a9f5;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 0.562rem 1rem;
+  transition: all 0.15s;
+}
+.btn-primary:hover { background: #0398e0; border-color: #0398e0; }
+.btn-primary:disabled { opacity: 0.65; }
+
+.btn-light {
+  background: #f3f5f7;
+  color: #5b6b79;
+  border: 1px solid #f3f5f7;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 0.562rem 1rem;
+  transition: all 0.15s;
+}
+.btn-light:hover { background: #dbe0e5; }
+
+/* Pagination */
+.pc-pagination .page-item.active .page-link {
+  background: #04a9f5;
+  border-color: #04a9f5;
+  color: #fff;
+}

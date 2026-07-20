@@ -1,17 +1,22 @@
-import client from './client'
-import type { Store, PaginatedResponse } from '../types'
+import { mockApi } from '../lib/mock-data'
+import type { Store, StockRecord } from '../types'
 
-export async function fetchStores(params?: Record<string, string>) {
-  const { data } = await client.get<PaginatedResponse<Store>>('/stores', { params })
-  return data
+export async function fetchStores(params?: { search?: string; region?: string; page?: number }) {
+  return mockApi.getStores(params)
 }
 
 export async function fetchStore(id: number) {
-  const { data } = await client.get<{ data: Store; stock_history: unknown[] }>(`/stores/${id}`)
-  return data
+  return mockApi.getStore(id) as Promise<{ data: Store; stock_history: StockRecord[] }>
 }
 
 export async function fetchStoresGeoJson() {
-  const { data } = await client.get('/stores/geojson')
-  return data
+  const { data } = await mockApi.getStores()
+  return {
+    type: 'FeatureCollection' as const,
+    features: data.map((s) => ({
+      type: 'Feature' as const,
+      geometry: { type: 'Point' as const, coordinates: [0, 0] },
+      properties: { sap_id: s.sap_id, name: s.outlet_name, category: s.category, oos: s.oos },
+    })),
+  }
 }

@@ -1,27 +1,22 @@
-import client from './client'
-import type { Depot, PaginatedResponse } from '../types'
+import { mockApi } from '../lib/mock-data'
+import type { Depot } from '../types'
 
 export async function fetchDepots() {
-  const { data } = await client.get<PaginatedResponse<Depot>>('/depots')
-  return data
+  return mockApi.getDepots()
 }
 
 export async function fetchDepot(id: number) {
-  const { data } = await client.get<{ data: Depot }>(`/depots/${id}`)
-  return data
+  return mockApi.getDepot(id)
 }
 
 export async function createDepot(input: Partial<Depot>) {
-  const { data } = await client.post<{ data: Depot; message: string }>('/depots', input)
-  return data
+  return mockApi.createDepot(input)
 }
 
 export async function updateDepot(id: number, input: Partial<Depot>) {
-  const { data } = await client.put<{ data: Depot; message: string }>(`/depots/${id}`, input)
-  return data
+  return mockApi.updateDepot(id, input)
 }
 
 export async function deleteDepot(id: number) {
-  const { data } = await client.delete<{ message: string }>(`/depots/${id}`)
-  return data
+  return mockApi.deleteDepot(id)
 }

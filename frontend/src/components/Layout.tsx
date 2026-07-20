@@ -7,7 +7,7 @@ export default function Layout() {
   const { user, loading } = useAuth()
 
   if (loading) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>
+    return <div className="flex items-center justify-center h-screen text-body">Loading...</div>
   }
 
   if (!user) {
@@ -15,14 +15,14 @@ export default function Layout() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
       <Sidebar />
-      <div className="ml-64">
-        <Header />
-        <main className="p-6">
+      <Header />
+      <div className="pc-container">
+        <div className="pc-content">
           <Outlet />
-        </main>
+        </div>
       </div>
-    </div>
+    </>
   )
 }
