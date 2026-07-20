@@ -17,76 +17,63 @@ Sistem monitoring Out of Stock (OOS) untuk memantau ketersediaan stok di seluruh
 
 ### 2.1 Dashboard
 - Peta interaktif (Leaflet.js) menampilkan semua toko
-- Marker toko berwarna berdasarkan status stok:
-  - Hijau = Stok tersedia
-  - Kuning = Stok rendah (< threshold)
-  - Merah = OOS (habis)
+- Marker toko berwarna berdasarkan category (RED/YELLOW/GREEN)
 - Ringkasan statistik:
   - Total toko
-  - Jumlah toko OOS hari ini
-  - Jumlah toko stok rendah
-  - Persentase ketersediaan
-- Filter tanggal untuk melihat data historis
+  - Jumlah toko OOS
+  - Jumlah toko RED/YELLOW/GREEN
+- Filter tanggal
 
 ### 2.2 Manajemen Toko
 - **List Toko:**
-  - Tabel dengan kolom: Nama, Alamat, Depo, Status Stok Terakhir
-  - Pencarian berdasarkan nama/alamat
-  - Filter berdasarkan depo
+  - Tabel: SAP ID, Nama Toko, Outlet ID, Region, Supplier
+  - Pencarian & filter
 - **Detail Toko:**
-  - Informasi lengkap toko (nama, alamat, koordinat, kontak)
-  - Grafik riwayat stok
-  - Data stok terakhir
-- **Tambah/Edit Toko:**
-  - Form: Nama, Alamat, Latitude, Longitude, Depo (dropdown), Kontak
-- **Import Toko:**
-  - Upload CSV/XLSX
-  - Kolom: name, address, latitude, longitude, depot_name, contact_person, contact_phone
-  - Validasi dan preview sebelum import
-  - Error handling per baris
+  - Info toko + riwayat stok (grafik)
+  - DSI trend
 
 ### 2.3 Monitoring Stok
 - **Tabel Stok Harian:**
-  - Tanggal, Nama Toko, Qty Tersedia, Qty OOS, Status
-  - Filter tanggal, filter toko, filter status
-- **Detail Stok:**
-  - Riwayat stok per toko (grafik line chart)
-  - Perbandingan stok antar periode
+  - Kolom: Tanggal, SAP ID, Nama Toko, Brand, Stock, Sellout, DSI, Category, JWK, OOS
+  - Filter tanggal, toko, category, OOS
+  - Sorting kolom
 
 ### 2.4 Upload Stok Harian
-- **Upload Form:**
-  - Drag & drop atau browse file
-  - Format: CSV/XLSX
-  - Kolom: store_name, date, quantity_available, quantity_oos
-  - Download template CSV
-- **Validasi:**
-  - Cek duplikat (satu toko, satu tanggal)
-  - Validasi store_name harus ada di database
-  - Preview data sebelum submit
-- **Hasil Upload:**
-  - Jumlah berhasil
-  - Jumlah gagal + detail error
+- Drag & drop file CSV/XLSX
+- Download template
+- **Kolom di-upload:**
+  - `sap_id`, `outlet_id`, `outlet_name`, `account`, `region`, `source`, `supplier`
+  - `brand`, `stockdate`, `stock`, `stockc`, `sellout`, `DSI`, `Category`, `jwk`, `oos`
+  - `og_urgent`, `og_total`
+- Validasi: duplicate cek sap_id + date + brand
+- Preview & error handling per baris
 
 ### 2.5 Manajemen Depo
-- **List Depo:**
-  - Tabel: Nama, Alamat, Jumlah Toko
-- **Tambah/Edit Depo:**
-  - Form: Nama, Alamat, Latitude, Longitude, Kontak
-- **Detail Depo:**
-  - Daftar toko di bawah depo
-  - Ringkasan stok seluruh toko di depo
+- List depo, tambah/edit/hapus
+- Detail: daftar toko di bawah depo
+
+### 2.6 Upload Data Delivery
+- Upload file Excel delivery (`data adop delivery.xlsx`)
+- Filter otomatis produk galon (`5 GALLON AQUA LOCAL`, `5 GALLON VIT LOCAL`)
+- Deteksi Billing Block = Z3 → status UNDELIVERED (Belum Terkirim)
+- Output: jumlah toko terkirim vs belum terkirim
+- Upload berkala (sama seperti stok)
 
 ---
 
 ## 3. Data Models
 
-### 3.1 users
+### 3.1 stores
 | Field | Type | Note |
 |-------|------|------|
 | id | bigint PK | auto-increment |
-| name | varchar(255) | |
-| email | varchar(255) | unique |
-| password | varchar(255) | hashed |
+| sap_id | varchar(50) | unique, dari upload |
+| outlet_id | varchar(20) | kode outlet |
+| outlet_name | varchar(255) | nama toko |
+| account | varchar(50) | tipe akun (IDM) |
+| region | varchar(20) | wilayah |
+| source | varchar(50) | sumber |
+| supplier | varchar(255) | supplier |
 | created_at | timestamp | |
 | updated_at | timestamp | |
 
@@ -96,38 +83,43 @@ Sistem monitoring Out of Stock (OOS) untuk memantau ketersediaan stok di seluruh
 | id | bigint PK | auto-increment |
 | name | varchar(255) | unique |
 | address | text | |
-| latitude | decimal(10,7) | nullable |
-| longitude | decimal(10,7) | nullable |
-| contact_person | varchar(255) | nullable |
-| contact_phone | varchar(50) | nullable |
+| contact_person | varchar(255) | |
+| contact_phone | varchar(50) | |
 | created_at | timestamp | |
 | updated_at | timestamp | |
 
-### 3.3 stores
-| Field | Type | Note |
-|-------|------|------|
-| id | bigint PK | auto-increment |
-| name | varchar(255) | |
-| address | text | |
-| latitude | decimal(10,7) | nullable |
-| longitude | decimal(10,7) | nullable |
-| depot_id | bigint FK | references depots |
-| contact_person | varchar(255) | nullable |
-| contact_phone | varchar(50) | nullable |
-| created_at | timestamp | |
-| updated_at | timestamp | |
-
-### 3.4 stock_records
+### 3.3 stock_records
 | Field | Type | Note |
 |-------|------|------|
 | id | bigint PK | auto-increment |
 | store_id | bigint FK | references stores |
-| date | date | unique per store |
-| quantity_available | int | default 0 |
-| quantity_oos | int | default 0 |
-| status | enum | available/low_stock/oos |
+| sap_id | varchar(50) | denormalized |
+| stockdate | date | tanggal stok |
+| brand | varchar(100) | merek |
+| stock | int | stok saat ini |
+| stockc | int | stock current |
+| sellout | int | sellout |
+| dsi | decimal(10,2) | Days Sales Inventory |
+| category | enum(RED,YELLOW,GREEN) | dari DSI |
+| jwk | varchar(50) | Jadwal Wajib Kirim |
+| oos | enum(YES,NO) | status OOS |
+| og_urgent | int | OG Urgent |
+| og_total | int | Total OG |
 | created_at | timestamp | |
 | updated_at | timestamp | |
+| UNIQUE | (store_id, stockdate, brand) | |
+
+### 3.4 delivery_status
+| Field | Type | Note |
+|-------|------|------|
+| id | bigint PK | auto-increment |
+| store_id | bigint FK | references stores |
+| sap_id | varchar(50) | denormalized |
+| status | enum(DELIVERED,UNDELIVERED) | UNDELIVERED = Z3 galon |
+| check_date | date | tanggal upload |
+| created_at | timestamp | |
+| updated_at | timestamp | |
+| UNIQUE | (store_id, check_date) | 1 record per toko per upload |
 
 ---
 
@@ -139,82 +131,74 @@ Sistem monitoring Out of Stock (OOS) untuk memantau ketersediaan stok di seluruh
 - `POST /logout` - Proses logout
 
 ### Dashboard
-- `GET /dashboard` - Dashboard utama dengan peta + statistik
+- `GET /dashboard` - Dashboard peta + statistik
 
 ### Stores
 - `GET /stores` - List toko
-- `GET /stores/create` - Form tambah toko
-- `POST /stores` - Simpan toko baru
 - `GET /stores/{id}` - Detail toko
-- `GET /stores/{id}/edit` - Form edit toko
-- `PUT /stores/{id}` - Update toko
-- `DELETE /stores/{id}` - Hapus toko
-- `GET /stores/import` - Form import toko
-- `POST /stores/import` - Proses import toko
 
-### Stock Records
-- `GET /stocks` - List data stok harian
-- `GET /stocks/upload` - Form upload stok
-- `POST /stocks/upload` - Proses upload stok
-- `GET /stocks/{store_id}` - Riwayat stok per toko
+### Stocks
+- `GET /stocks` - List stok harian
+- `GET /stocks/upload` - Form upload
+- `POST /stocks/upload` - Proses upload
+- `GET /stocks/{store}` - Riwayat stok per toko
 
 ### Depots
 - `GET /depots` - List depo
-- `GET /depots/create` - Form tambah depo
-- `POST /depots` - Simpan depo baru
-- `GET /depots/{id}` - Detail depo
-- `GET /depots/{id}/edit` - Form edit depo
-- `PUT /depots/{id}` - Update depo
-- `DELETE /depots/{id}` - Hapus depo
+- `GET /depots/create` - Form tambah
+- `POST /depots` - Simpan
+- `GET /depots/{id}` - Detail
+- `GET /depots/{id}/edit` - Form edit
+- `PUT /depots/{id}` - Update
+- `DELETE /depots/{id}` - Hapus
 
-### Map Data
-- `GET /api/stores/geojson` - Data GeoJSON untuk peta (stores + status stok terakhir)
+### Delivery
+- `GET /delivery/upload` - Form upload delivery
+- `POST /delivery/upload` - Proses upload delivery
+
+### Map
+- `GET /api/stores/geojson` - Data untuk peta
 
 ---
 
 ## 5. Business Rules
 
-### Status Stok
-- **OOS** = quantity_oos > 0 DAN quantity_available = 0
-- **Low Stock** = quantity_available > 0 DAN quantity_available < threshold (default 10)
-- **Available** = quantity_available >= threshold
+### DSI & Category
+- **DSI** = Days Sales Inventory (rata-rata stockdate0-10, sudah ada dari upload)
+- **RED** = OOS YES atau DSI rendah
+- **YELLOW** = DSI sedang
+- **GREEN** = DSI aman
 
 ### Upload Stok
-- Satu baris = satu toko, satu tanggal
-- Jika sudah ada data untuk toko + tanggal yang sama, update data lama
-- Status otomatis dihitung berdasarkan quantity
+- Satu baris = satu toko + satu tanggal + satu brand
+- Jika data sudah ada (sap_id + date + brand), update
+- Jika sap_id belum ada di DB, auto-create store baru
 
-### Import Toko
-- Jika nama toko sudah ada, skip (skip duplikat)
-- Koordinat wajib diisi agar muncul di peta
-- Depo harus sudah ada di database
+### Stores
+- `sap_id` unique
+- Data store dibuat otomatis dari upload stok
+
+### Upload Delivery
+- Filter otomatis produk yang mengandung "GALLON" (galon)
+- Group by Cust ID → cocokkan dengan sap_id di stores
+- Jika ada Billing Block = Z3 → status UNDELIVERED (Belum Terkirim)
+- Jika tidak ada Z3 → status DELIVERED (Terkirim)
+- check_date = tanggal upload file
+- Data delivery per toko: 1 record per (store_id, check_date)
 
 ---
 
 ## 6. UI/UX Requirements
 
-### Layout
-- Sidebar navigasi (kiri)
-- Header dengan logo + user info
-- Content area (kanan)
-
 ### Halaman
-1. **Login** - Form email + password
-2. **Dashboard** - Peta penuh + statistik overlay
-3. **Stores** - Tabel + CRUD
-4. **Stocks** - Tabel + Upload
-5. **Depots** - Tabel + CRUD
+1. **Login** - Email + password
+2. **Dashboard** - Peta + statistik + jumlah toko Belum Terkirim
+3. **Stores** - Tabel + detail (termasuk status pengiriman)
+4. **Stocks** - Tabel + upload
+5. **Delivery** - Upload file delivery
+6. **Depots** - CRUD
 
-### Responsive
-- Desktop: Sidebar tetap
-- Mobile: Sidebar collapsible
-
----
-
-## 7. Non-Functional Requirements
-
+### Non-Functional
 - Load time < 3 detik
-- Support minimal 100 toko
-- Data stok minimal 30 hari
-- File upload maks 10MB
-- Browser: Chrome, Firefox, Edge (latest 2 version)
+- Support 1000+ toko
+- Upload file max 10MB

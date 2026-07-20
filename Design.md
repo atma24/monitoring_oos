@@ -1,123 +1,220 @@
 # Design Document - OOS Monitoring System
 
-## 1. Architecture Overview
+## 1. Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                      Browser (React)                     │
-│  ┌─────────┐  ┌──────────┐  ┌─────────┐  ┌──────────┐  │
-│  │Dashboard │  │  Stores  │  │ Stocks  │  │  Depots  │  │
-│  │  + Map   │  │   Page   │  │  Page   │  │   Page   │  │
-│  └────┬─────┘  └────┬─────┘  └────┬────┘  └────┬─────┘  │
-│       └──────────────┴─────────────┴─────────────┘       │
-│                           │                              │
-│                    Inertia.js Router                     │
-└───────────────────────────┬─────────────────────────────┘
-                            │ HTTP
-┌───────────────────────────┴─────────────────────────────┐
-│                    Laravel Backend                        │
-│  ┌─────────┐  ┌──────────┐  ┌─────────┐  ┌──────────┐  │
-│  │Dashboard │  │ Store    │  │ Stock   │  │  Depot   │  │
-│  │Controller│  │Controller│  │Controller│  │Controller│  │
-│  └────┬─────┘  └────┬─────┘  └────┬────┘  └────┬─────┘  │
-│       └──────────────┴─────────────┴─────────────┘       │
-│                           │                              │
-│                    Eloquent ORM                          │
-└───────────────────────────┬─────────────────────────────┘
-                            │
-                    ┌───────┴───────┐
-                    │     MySQL     │
-                    └───────────────┘
+Browser (React) → Inertia.js → Laravel Backend → MySQL
 ```
 
 ---
 
-## 2. Directory Structure
+## 2. Frontend Design
+
+### 2.1 Layout
 
 ```
-monitoring_oos/
-├── app/
-│   ├── Http/
-│   │   ├── Controllers/
-│   │   │   ├── Auth/
-│   │   │   │   ├── LoginController.php
-│   │   │   │   └── RegisteredUserController.php
-│   │   │   ├── DashboardController.php
-│   │   │   ├── StoreController.php
-│   │   │   ├── StockController.php
-│   │   │   └── DepotController.php
-│   │   ├── Requests/
-│   │   │   ├── StoreRequest.php
-│   │   │   ├── StockUploadRequest.php
-│   │   │   └── DepotRequest.php
-│   │   └── Middleware/
-│   ├── Models/
-│   │   ├── User.php
-│   │   ├── Store.php
-│   │   ├── StockRecord.php
-│   │   └── Depot.php
-│   └── Services/
-│       ├── StockImportService.php
-│       └── StoreImportService.php
-├── database/
-│   ├── migrations/
-│   │   ├── create_depots_table.php
-│   │   ├── create_stores_table.php
-│   │   └── create_stock_records_table.php
-│   └── seeders/
-│       └── DatabaseSeeder.php
-├── resources/
-│   ├── js/
-│   │   ├── app.jsx
-│   │   ├── Pages/
-│   │   │   ├── Auth/
-│   │   │   │   └── Login.jsx
-│   │   │   ├── Dashboard.jsx
-│   │   │   ├── Stores/
-│   │   │   │   ├── Index.jsx
-│   │   │   │   ├── Show.jsx
-│   │   │   │   ├── Create.jsx
-│   │   │   │   ├── Edit.jsx
-│   │   │   │   └── Import.jsx
-│   │   │   ├── Stocks/
-│   │   │   │   ├── Index.jsx
-│   │   │   │   └── Upload.jsx
-│   │   │   └── Depots/
-│   │   │       ├── Index.jsx
-│   │   │       ├── Show.jsx
-│   │   │       ├── Create.jsx
-│   │   │       └── Edit.jsx
-│   │   ├── Components/
-│   │   │   ├── AppLayout.jsx
-│   │   │   ├── Sidebar.jsx
-│   │   │   ├── MapView.jsx
-│   │   │   ├── DataTable.jsx
-│   │   │   ├── FileUpload.jsx
-│   │   │   └── StatusBadge.jsx
-│   │   └── Hooks/
-│   │       └── useMap.js
-│   └── css/
-│       └── app.css
-├── routes/
-│   └── web.php
-└── vite.config.js
+┌────────────────────────────────────────────────────────┐
+│ ┌──────────┐ ┌────────────────────────────────────────┐│
+│ │          │ │  Header                                ││
+│ │  LOGO    │ │  [Page Title]          [User ▼]        ││
+│ │          │ ├────────────────────────────────────────┤│
+│ │  📊 Dash │ │                                        ││
+│ │  🏪 Stores│ │         CONTENT AREA                   ││
+│ │  📦 Stocks│ │                                        ││
+│ │  🚚 Delivery││   (stats cards, tables, map, forms)   ││
+│ │  🏭 Depots│ │                                        ││
+│ │          │ └────────────────────────────────────────┤│
+│ │  SIDEBAR │ │  Footer                                ││
+│ │  (w-64)  │ └────────────────────────────────────────┘│
+│ └──────────┘                                          │
+└────────────────────────────────────────────────────────┘
+```
+
+**Struktur halaman:**
+- **Sidebar** (fixed kiri, lebar 256px) — navigasi utama
+- **Header** (fixed atas, offset kiri 256px) — judul halaman + dropdown user
+- **Content** (padding 24px) — konten utama per halaman
+- **Footer** (opsional) — copyright
+
+### 2.2 Sidebar Component
+
+```jsx
+<aside className="w-64 bg-white border-r h-screen fixed left-0 top-0 z-30">
+  <div className="h-16 flex items-center px-6 border-b">
+    <span className="text-xl font-bold text-blue-600">OOS Monitor</span>
+  </div>
+  <nav className="p-4 space-y-1">
+    <NavItem icon="📊" label="Dashboard" href={route('dashboard')} />
+    <NavItem icon="🏪" label="Stores" href={route('stores.index')} />
+    <NavItem icon="📦" label="Stocks" href={route('stocks.index')} />
+    <NavItem icon="🚚" label="Delivery" href={route('delivery.upload')} />
+    <NavItem icon="🏭" label="Depots" href={route('depots.index')} />
+  </nav>
+</aside>
+```
+
+### 2.3 Header Component
+
+```jsx
+<header className="h-16 bg-white border-b flex items-center justify-between px-6 ml-64">
+  <h1 className="text-lg font-semibold text-gray-700">{pageTitle}</h1>
+  <div className="flex items-center gap-3">
+    <span className="text-sm text-gray-500">{user.name}</span>
+    <Dropdown>
+      <Dropdown.Link href={route('profile.edit')}>Profile</Dropdown.Link>
+      <Dropdown.Link href={route('logout')} method="post" as="button">
+        Log Out
+      </Dropdown.Link>
+    </Dropdown>
+  </div>
+</header>
+```
+
+### 2.4 Card Design
+
+Statistik cards (grid 2-6 kolom):
+
+```jsx
+<div className="bg-white rounded-xl shadow-sm border p-4 flex items-center gap-4">
+  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 text-xl">
+    🏪
+  </div>
+  <div>
+    <p className="text-xs text-gray-500 uppercase tracking-wide">Total Toko</p>
+    <p className="text-2xl font-bold text-gray-800">{stats.total_stores}</p>
+  </div>
+</div>
+```
+
+### 2.5 Table Design
+
+```jsx
+<div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+  <table className="w-full text-sm">
+    <thead>
+      <tr className="bg-gray-50 border-b">
+        <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Kolom</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr className="border-b last:border-0 hover:bg-gray-50">
+        <td className="px-4 py-3">{value}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+```
+
+### 2.6 Page Layout per Fitur
+
+**Dashboard:**
+```
+┌─────────────── Grid Kartu Statistik (6 kolom) ──────────────┐
+│ [🏪 Total] [❗ OOS] [🔴 RED] [🟡 YELLOW] [🟢 GREEN] [🚫 Blm Kirim] │
+├─────────────────────────────────────────────────────────────┤
+│                     Peta Leaflet.js                          │
+│              (marker berwarna sesuai category)                │
+├─────────────────────────────────────────────────────────────┤
+│           Tabel 10 toko terbaru / terbanyak OOS              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Stores Index:**
+```
+┌── Filter Bar ────────────────────────────────────────┐
+│ [Cari...    ] [Region ▼] [🔍 Cari]                   │
+├── Tabel ─────────────────────────────────────────────┤
+│ SAP ID │ Nama │ Outlet │ Region │ Category │ OOS │ Kirim │
+├── Pagination ────────────────────────────────────────┤
+│ Page 1 of 10  < 1 2 3 4 5 >                         │
+└──────────────────────────────────────────────────────┘
+```
+
+**Stocks Index:**
+```
+┌── Filter Bar ───────────────────────────────────────────┐
+│ [Tanggal ▼] [Category ▼] [OOS ▼] [Filter]  [Upload Stok] │
+├── Tabel ────────────────────────────────────────────────┤
+│ Tanggal │ SAP │ Toko │ Stock │ SO │ DSI │ Cat │ OOS │ OG │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Upload Pages (Stocks & Delivery):**
+```
+┌── Upload File ────────────────────────────────────────┐
+│                                                        │
+│  ┌────────────────────────────────────────────────┐    │
+│  │         [Drag & drop atau klik untuk upload]    │    │
+│  └────────────────────────────────────────────────┘    │
+│                                                        │
+│  [📤 Upload]                                           │
+│                                                        │
+│  Hasil: 100 berhasil, 2 gagal                          │
+│  ⚠ Row 5: SAP ID kosong                               │
+└────────────────────────────────────────────────────────┘
+```
+
+### 2.7 Color Palette (Tailwind)
+
+| Penggunaan | Kelas Tailwind |
+|-----------|---------------|
+| Sidebar background | `bg-white` |
+| Sidebar item active | `bg-blue-50 text-blue-600 font-medium` |
+| Header background | `bg-white border-b border-gray-200` |
+| Card background | `bg-white rounded-xl shadow-sm border border-gray-200` |
+| Primary button | `bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2` |
+| Secondary button | `bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg px-4 py-2` |
+| Table header | `bg-gray-50 text-gray-500 text-xs font-semibold uppercase tracking-wide` |
+| Badge RED | `bg-red-100 text-red-800` |
+| Badge YELLOW | `bg-yellow-100 text-yellow-800` |
+| Badge GREEN | `bg-green-100 text-green-800` |
+| Badge OOS YES | `text-red-600 font-semibold` |
+| Badge OOS NO | `text-green-600 font-semibold` |
+| Badge TERKIRIM | `bg-green-100 text-green-800` |
+| Badge BELUM TERKIRIM | `bg-orange-100 text-orange-800` |
+
+### 2.8 Pages Structure
+
+```
+resources/js/Pages/
+├── Dashboard.jsx            # Peta + statistik + tabel
+├── Auth/                    # Breeze auth pages
+├── Profile/                 # Breeze profile pages
+├── Stores/
+│   ├── Index.jsx            # List toko + filter
+│   └── Show.jsx             # Detail toko + riwayat stok
+├── Stocks/
+│   ├── Index.jsx            # Tabel stok + filter
+│   ├── Upload.jsx           # Form upload stok
+│   └── Show.jsx             # Riwayat stok per toko
+├── Delivery/
+│   └── Upload.jsx           # Form upload delivery
+└── Depots/
+    ├── Index.jsx            # List depo
+    ├── Create.jsx           # Tambah depo
+    ├── Show.jsx             # Detail depo
+    └── Edit.jsx             # Edit depo
 ```
 
 ---
 
-## 3. Database Schema (MySQL)
+## 3. Database Schema
 
-### 3.1 users
+### 3.1 stores
 ```sql
-CREATE TABLE users (
+CREATE TABLE stores (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    email_verified_at TIMESTAMP NULL,
-    password VARCHAR(255) NOT NULL,
-    remember_token VARCHAR(100) NULL,
+    sap_id VARCHAR(50) NOT NULL UNIQUE,
+    outlet_id VARCHAR(20) NOT NULL,
+    outlet_name VARCHAR(255) NOT NULL,
+    account VARCHAR(50) NULL,
+    region VARCHAR(20) NULL,
+    source VARCHAR(50) NULL,
+    supplier VARCHAR(255) NULL,
     created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL
+    updated_at TIMESTAMP NULL,
+    INDEX idx_stores_sap_id (sap_id),
+    INDEX idx_stores_region (region)
 ) ENGINE=InnoDB;
 ```
 
@@ -126,50 +223,56 @@ CREATE TABLE users (
 CREATE TABLE depots (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,
-    address TEXT NOT NULL,
-    latitude DECIMAL(10,7) NULL,
-    longitude DECIMAL(10,7) NULL,
+    address TEXT NULL,
     contact_person VARCHAR(255) NULL,
     contact_phone VARCHAR(50) NULL,
     created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL,
-    INDEX idx_depots_name (name)
+    updated_at TIMESTAMP NULL
 ) ENGINE=InnoDB;
 ```
 
-### 3.3 stores
-```sql
-CREATE TABLE stores (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    address TEXT NOT NULL,
-    latitude DECIMAL(10,7) NOT NULL,
-    longitude DECIMAL(10,7) NOT NULL,
-    depot_id BIGINT UNSIGNED NOT NULL,
-    contact_person VARCHAR(255) NULL,
-    contact_phone VARCHAR(50) NULL,
-    created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL,
-    INDEX idx_stores_depot (depot_id),
-    INDEX idx_stores_location (latitude, longitude),
-    FOREIGN KEY (depot_id) REFERENCES depots(id) ON DELETE RESTRICT
-) ENGINE=InnoDB;
-```
-
-### 3.4 stock_records
+### 3.3 stock_records
 ```sql
 CREATE TABLE stock_records (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     store_id BIGINT UNSIGNED NOT NULL,
-    date DATE NOT NULL,
-    quantity_available INT NOT NULL DEFAULT 0,
-    quantity_oos INT NOT NULL DEFAULT 0,
-    status ENUM('available', 'low_stock', 'oos') NOT NULL DEFAULT 'available',
+    sap_id VARCHAR(50) NOT NULL,
+    stockdate DATE NOT NULL,
+    brand VARCHAR(100) NULL,
+    stock INT NOT NULL DEFAULT 0,
+    stockc INT NOT NULL DEFAULT 0,
+    sellout INT NOT NULL DEFAULT 0,
+    dsi DECIMAL(10,2) NULL DEFAULT 0,
+    category ENUM('RED','YELLOW','GREEN') NULL,
+    jwk VARCHAR(50) NULL,
+    oos ENUM('YES','NO') NOT NULL DEFAULT 'NO',
+    og_urgent INT NULL DEFAULT 0,
+    og_total INT NULL DEFAULT 0,
     created_at TIMESTAMP NULL,
     updated_at TIMESTAMP NULL,
-    UNIQUE KEY unique_store_date (store_id, date),
-    INDEX idx_stock_date (date),
-    INDEX idx_stock_status (status),
+    UNIQUE KEY uniq_store_date_brand (store_id, stockdate, brand),
+    INDEX idx_stock_sap_id (sap_id),
+    INDEX idx_stock_date (stockdate),
+    INDEX idx_stock_category (category),
+    INDEX idx_stock_oos (oos),
+    FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+```
+
+### 3.4 delivery_status
+```sql
+CREATE TABLE delivery_status (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    store_id BIGINT UNSIGNED NOT NULL,
+    sap_id VARCHAR(50) NOT NULL,
+    status ENUM('DELIVERED','UNDELIVERED') NOT NULL DEFAULT 'DELIVERED',
+    check_date DATE NOT NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    UNIQUE KEY uniq_store_check_date (store_id, check_date),
+    INDEX idx_delivery_sap_id (sap_id),
+    INDEX idx_delivery_status (status),
+    INDEX idx_delivery_date (check_date),
     FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 ```
@@ -178,60 +281,22 @@ CREATE TABLE stock_records (
 
 ## 4. Eloquent Models
 
-### 4.1 Depot.php
+### 4.1 Store.php
 ```php
 <?php
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-
-class Depot extends Model
-{
-    protected $fillable = [
-        'name',
-        'address',
-        'latitude',
-        'longitude',
-        'contact_person',
-        'contact_phone',
-    ];
-
-    public function stores(): HasMany
-    {
-        return $this->hasMany(Store::class);
-    }
-}
-```
-
-### 4.2 Store.php
-```php
-<?php
-
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Store extends Model
 {
     protected $fillable = [
-        'name',
-        'address',
-        'latitude',
-        'longitude',
-        'depot_id',
-        'contact_person',
-        'contact_phone',
+        'sap_id', 'outlet_id', 'outlet_name',
+        'account', 'region', 'source', 'supplier',
     ];
-
-    public function depot(): BelongsTo
-    {
-        return $this->belongsTo(Depot::class);
-    }
 
     public function stockRecords(): HasMany
     {
@@ -240,12 +305,22 @@ class Store extends Model
 
     public function latestStock(): HasOne
     {
-        return $this->hasOne(StockRecord::class)->latestOfMany('date');
+        return $this->hasOne(StockRecord::class)->latestOfMany('stockdate');
+    }
+
+    public function deliveryStatuses(): HasMany
+    {
+        return $this->hasMany(DeliveryStatus::class);
+    }
+
+    public function latestDelivery(): HasOne
+    {
+        return $this->hasOne(DeliveryStatus::class)->latestOfMany('check_date');
     }
 }
 ```
 
-### 4.3 StockRecord.php
+### 4.2 StockRecord.php
 ```php
 <?php
 
@@ -257,17 +332,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class StockRecord extends Model
 {
     protected $fillable = [
-        'store_id',
-        'date',
-        'quantity_available',
-        'quantity_oos',
-        'status',
+        'store_id', 'sap_id', 'stockdate', 'brand',
+        'stock', 'stockc', 'sellout', 'dsi', 'category',
+        'jwk', 'oos', 'og_urgent', 'og_total',
     ];
 
     protected $casts = [
-        'date' => 'date',
-        'quantity_available' => 'integer',
-        'quantity_oos' => 'integer',
+        'stockdate' => 'date',
+        'stock' => 'integer',
+        'stockc' => 'integer',
+        'sellout' => 'integer',
+        'dsi' => 'decimal:2',
     ];
 
     public function store(): BelongsTo
@@ -275,15 +350,38 @@ class StockRecord extends Model
         return $this->belongsTo(Store::class);
     }
 
-    public static function calculateStatus(int $available, int $oos): string
+    public static function calculateCategory(float $dsi, string $oos): string
     {
-        if ($available === 0 && $oos > 0) {
-            return 'oos';
-        }
-        if ($available > 0 && $available < 10) {
-            return 'low_stock';
-        }
-        return 'available';
+        if ($oos === 'YES' || $dsi <= 0) return 'RED';
+        if ($dsi < 5) return 'RED';
+        if ($dsi < 14) return 'YELLOW';
+        return 'GREEN';
+    }
+}
+```
+
+### 4.3 DeliveryStatus.php
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class DeliveryStatus extends Model
+{
+    protected $fillable = [
+        'store_id', 'sap_id', 'status', 'check_date',
+    ];
+
+    protected $casts = [
+        'check_date' => 'date',
+    ];
+
+    public function store(): BelongsTo
+    {
+        return $this->belongsTo(Store::class);
     }
 }
 ```
@@ -296,11 +394,9 @@ class StockRecord extends Model
 ```php
 <?php
 
-namespace App\Controllers;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Store;
-use App\Models\StockRecord;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -313,30 +409,30 @@ class DashboardController extends Controller
         $stats = [
             'total_stores' => Store::count(),
             'oos_count' => Store::whereHas('latestStock', function ($q) use ($date) {
-                $q->where('date', $date)->where('status', 'oos');
+                $q->where('stockdate', $date)->where('oos', 'YES');
             })->count(),
-            'low_stock_count' => Store::whereHas('latestStock', function ($q) use ($date) {
-                $q->where('date', $date)->where('status', 'low_stock');
+            'red_count' => Store::whereHas('latestStock', function ($q) use ($date) {
+                $q->where('stockdate', $date)->where('category', 'RED');
             })->count(),
-            'available_count' => Store::whereHas('latestStock', function ($q) use ($date) {
-                $q->where('date', $date)->where('status', 'available');
+            'yellow_count' => Store::whereHas('latestStock', function ($q) use ($date) {
+                $q->where('stockdate', $date)->where('category', 'YELLOW');
+            })->count(),
+            'green_count' => Store::whereHas('latestStock', function ($q) use ($date) {
+                $q->where('stockdate', $date)->where('category', 'GREEN');
             })->count(),
         ];
 
-        $stores = Store::with(['latestStock', 'depot'])
-            ->get()
-            ->map(function ($store) {
-                return [
-                    'id' => $store->id,
-                    'name' => $store->name,
-                    'latitude' => $store->latitude,
-                    'longitude' => $store->longitude,
-                    'status' => $store->latestStock?->status ?? 'no_data',
-                    'quantity_available' => $store->latestStock?->quantity_available ?? 0,
-                    'quantity_oos' => $store->latestStock?->quantity_oos ?? 0,
-                    'depot' => $store->depot->name,
-                ];
-            });
+        $stores = Store::with('latestStock')->get()->map(function ($store) {
+            return [
+                'id' => $store->id,
+                'sap_id' => $store->sap_id,
+                'name' => $store->outlet_name,
+                'category' => $store->latestStock?->category ?? 'NO_DATA',
+                'stock' => $store->latestStock?->stock ?? 0,
+                'oos' => $store->latestStock?->oos ?? 'NO',
+                'dsi' => $store->latestStock?->dsi ?? 0,
+            ];
+        });
 
         return Inertia::render('Dashboard', [
             'stats' => $stats,
@@ -351,12 +447,9 @@ class DashboardController extends Controller
 ```php
 <?php
 
-namespace App\Controllers;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreRequest;
 use App\Models\Store;
-use App\Services\StoreImportService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -364,91 +457,36 @@ class StoreController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Store::with(['depot', 'latestStock']);
+        $query = Store::with('latestStock');
 
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
-                $q->where('name', 'like', "%{$request->search}%")
-                  ->orWhere('address', 'like', "%{$request->search}%");
+                $q->where('outlet_name', 'like', "%{$request->search}%")
+                  ->orWhere('sap_id', 'like', "%{$request->search}%")
+                  ->orWhere('outlet_id', 'like', "%{$request->search}%");
             });
         }
 
-        if ($request->filled('depot_id')) {
-            $query->where('depot_id', $request->depot_id);
+        if ($request->filled('region')) {
+            $query->where('region', $request->region);
         }
 
-        $stores = $query->orderBy('name')->paginate(15)->withQueryString();
+        $stores = $query->orderBy('outlet_name')->paginate(20)->withQueryString();
 
         return Inertia::render('Stores/Index', [
             'stores' => $stores,
-            'depots' => \App\Models\Depot::orderBy('name')->get(),
-            'filters' => $request->only(['search', 'depot_id']),
+            'filters' => $request->only(['search', 'region']),
         ]);
-    }
-
-    public function create()
-    {
-        return Inertia::render('Stores/Create', [
-            'depots' => \App\Models\Depot::orderBy('name')->get(),
-        ]);
-    }
-
-    public function store(StoreRequest $request)
-    {
-        Store::create($request->validated());
-        return redirect()->route('stores.index')->with('success', 'Toko berhasil ditambahkan');
     }
 
     public function show(Store $store)
     {
-        $store->load(['depot', 'stockRecords' => function ($q) {
-            $q->orderByDesc('date')->limit(30);
+        $store->load(['stockRecords' => function ($q) {
+            $q->orderByDesc('stockdate')->limit(30);
         }]);
 
         return Inertia::render('Stores/Show', [
             'store' => $store,
-        ]);
-    }
-
-    public function edit(Store $store)
-    {
-        return Inertia::render('Stores/Edit', [
-            'store' => $store,
-            'depots' => \App\Models\Depot::orderBy('name')->get(),
-        ]);
-    }
-
-    public function update(StoreRequest $request, Store $store)
-    {
-        $store->update($request->validated());
-        return redirect()->route('stores.index')->with('success', 'Toko berhasil diupdate');
-    }
-
-    public function destroy(Store $store)
-    {
-        $store->delete();
-        return redirect()->route('stores.index')->with('success', 'Toko berhasil dihapus');
-    }
-
-    public function import()
-    {
-        return Inertia::render('Stores/Import', [
-            'depots' => \App\Models\Depot::orderBy('name')->get(),
-        ]);
-    }
-
-    public function processImport(Request $request)
-    {
-        $request->validate([
-            'file' => 'required|file|mimes:csv,xlsx,xls|max:10240',
-        ]);
-
-        $service = app(StoreImportService::class);
-        $result = $service->import($request->file('file'));
-
-        return back()->with([
-            'import_result' => $result,
-            'success' => "Import selesai. Berhasil: {$result['success']}, Gagal: {$result['failed']}",
         ]);
     }
 }
@@ -458,9 +496,8 @@ class StoreController extends Controller
 ```php
 <?php
 
-namespace App\Controllers;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\StockRecord;
 use App\Models\Store;
 use App\Services\StockImportService;
@@ -473,35 +510,27 @@ class StockController extends Controller
     {
         $query = StockRecord::with('store');
 
-        if ($request->filled('date')) {
-            $query->where('date', $request->date);
-        }
-
-        if ($request->filled('store_id')) {
+        if ($request->filled('stockdate'))
+            $query->where('stockdate', $request->stockdate);
+        if ($request->filled('store_id'))
             $query->where('store_id', $request->store_id);
-        }
+        if ($request->filled('category'))
+            $query->where('category', $request->category);
+        if ($request->filled('oos'))
+            $query->where('oos', $request->oos);
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        $records = $query->orderByDesc('date')
-            ->orderBy('store_id')
-            ->paginate(20)
-            ->withQueryString();
+        $records = $query->orderByDesc('stockdate')
+            ->paginate(20)->withQueryString();
 
         return Inertia::render('Stocks/Index', [
             'records' => $records,
-            'stores' => Store::orderBy('name')->get(),
-            'filters' => $request->only(['date', 'store_id', 'status']),
+            'filters' => $request->only(['stockdate', 'store_id', 'category', 'oos']),
         ]);
     }
 
     public function upload()
     {
-        return Inertia::render('Stocks/Upload', [
-            'stores' => Store::orderBy('name')->get(),
-        ]);
+        return Inertia::render('Stocks/Upload');
     }
 
     public function processUpload(Request $request)
@@ -510,8 +539,7 @@ class StockController extends Controller
             'file' => 'required|file|mimes:csv,xlsx,xls|max:10240',
         ]);
 
-        $service = app(StockImportService::class);
-        $result = $service->import($request->file('file'));
+        $result = app(StockImportService::class)->import($request->file('file'));
 
         return back()->with([
             'import_result' => $result,
@@ -519,14 +547,12 @@ class StockController extends Controller
         ]);
     }
 
-    public function history(Store $store)
+    public function show(Store $store)
     {
         $records = $store->stockRecords()
-            ->orderByDesc('date')
-            ->limit(90)
-            ->get();
+            ->orderByDesc('stockdate')->limit(90)->get();
 
-        return Inertia::render('Stocks/History', [
+        return Inertia::render('Stocks/Show', [
             'store' => $store,
             'records' => $records,
         ]);
@@ -534,75 +560,45 @@ class StockController extends Controller
 }
 ```
 
-### 5.4 DepotController.php
+### 5.4 DeliveryController.php
 ```php
 <?php
 
-namespace App\Controllers;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Http\Requests\DepotRequest;
-use App\Models\Depot;
+use App\Models\DeliveryStatus;
+use App\Models\Store;
+use App\Services\DeliveryImportService;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
-class DepotController extends Controller
+class DeliveryController extends Controller
 {
-    public function index()
+    public function upload()
     {
-        $depots = Depot::withCount('stores')->orderBy('name')->paginate(15);
-        return Inertia::render('Depots/Index', [
-            'depots' => $depots,
+        return Inertia::render('Delivery/Upload');
+    }
+
+    public function processUpload(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls|max:10240',
         ]);
-    }
 
-    public function create()
-    {
-        return Inertia::render('Depots/Create');
-    }
+        $result = app(DeliveryImportService::class)->import($request->file('file'));
 
-    public function store(DepotRequest $request)
-    {
-        Depot::create($request->validated());
-        return redirect()->route('depots.index')->with('success', 'Depo berhasil ditambahkan');
-    }
-
-    public function show(Depot $depot)
-    {
-        $depot->load(['stores' => function ($q) {
-            $q->with('latestStock')->orderBy('name');
-        }]);
-
-        return Inertia::render('Depots/Show', [
-            'depot' => $depot,
+        return back()->with([
+            'import_result' => $result,
+            'success' => "Upload selesai. Terkirim: {$result['delivered']}, Belum Terkirim: {$result['undelivered']}",
         ]);
-    }
-
-    public function edit(Depot $depot)
-    {
-        return Inertia::render('Depots/Edit', [
-            'depot' => $depot,
-        ]);
-    }
-
-    public function update(DepotRequest $request, Depot $depot)
-    {
-        $depot->update($request->validated());
-        return redirect()->route('depots.index')->with('success', 'Depo berhasil diupdate');
-    }
-
-    public function destroy(Depot $depot)
-    {
-        $depot->delete();
-        return redirect()->route('depots.index')->with('success', 'Depo berhasil dihapus');
     }
 }
 ```
 
 ---
 
-## 6. Services
+## 6. StockImportService.php
 
-### 6.1 StockImportService.php
 ```php
 <?php
 
@@ -616,6 +612,27 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class StockImportService
 {
+    private array $columnMap = [
+        'sap_id' => 'sap_id',
+        'outlet_id' => 'outlet_id',
+        'outlet_name' => 'outlet_name',
+        'account' => 'account',
+        'region' => 'region',
+        'source' => 'source',
+        'supplier' => 'supplier',
+        'stockdate' => 'stockdate',
+        'stock' => 'stock',
+        'stockc' => 'stockc',
+        'sellout' => 'sellout',
+        'DSI' => 'dsi',
+        'Category' => 'category',
+        'jwk' => 'jwk',
+        'oos' => 'oos',
+        'og_urgent' => 'og_urgent',
+        'og_total' => 'og_total',
+        'brand' => 'brand',
+    ];
+
     public function import($file): array
     {
         $results = ['success' => 0, 'failed' => 0, 'errors' => []];
@@ -625,35 +642,61 @@ class StockImportService
             $sheet = $spreadsheet->getActiveSheet();
             $rows = $sheet->toArray();
 
-            // Skip header row
             $header = array_shift($rows);
+            $headerIndex = [];
+            foreach ($header as $i => $col) {
+                $col = trim($col);
+                if (isset($this->columnMap[$col]))
+                    $headerIndex[$this->columnMap[$col]] = $i;
+            }
 
-            foreach ($rows as $index => $row) {
-                $rowNum = $index + 2;
-
+            foreach ($rows as $i => $row) {
+                $rowNum = $i + 2;
                 try {
-                    $storeName = trim($row[0] ?? '');
-                    $date = $row[1] ?? null;
-                    $qtyAvailable = (int) ($row[2] ?? 0);
-                    $qtyOos = (int) ($row[3] ?? 0);
+                    $sapId = trim($row[$headerIndex['sap_id']] ?? '');
+                    $date = $row[$headerIndex['stockdate']] ?? null;
 
-                    if (empty($storeName) || empty($date)) {
-                        throw new \Exception('Nama toko dan tanggal wajib diisi');
+                    if (empty($sapId) || empty($date))
+                        throw new \Exception('SAP ID dan tanggal wajib diisi');
+
+                    $stockdate = \Carbon\Carbon::createFromFormat('d/m/Y', $date)->format('Y-m-d');
+
+                    $store = Store::firstOrCreate(
+                        ['sap_id' => $sapId],
+                        [
+                            'outlet_id' => trim($row[$headerIndex['outlet_id']] ?? ''),
+                            'outlet_name' => trim($row[$headerIndex['outlet_name']] ?? ''),
+                            'account' => trim($row[$headerIndex['account']] ?? ''),
+                            'region' => trim($row[$headerIndex['region']] ?? ''),
+                            'source' => trim($row[$headerIndex['source']] ?? ''),
+                            'supplier' => trim($row[$headerIndex['supplier']] ?? ''),
+                        ]
+                    );
+
+                    $dsi = (float) str_replace(',', '.', $row[$headerIndex['dsi']] ?? 0);
+                    $oosStatus = strtoupper(trim($row[$headerIndex['oos']] ?? 'NO'));
+                    $category = strtoupper(trim($row[$headerIndex['category']] ?? ''));
+                    if (empty($category)) {
+                        $category = StockRecord::calculateCategory($dsi, $oosStatus);
                     }
-
-                    $store = Store::where('name', $storeName)->first();
-                    if (!$store) {
-                        throw new \Exception("Toko '{$storeName}' tidak ditemukan");
-                    }
-
-                    $status = StockRecord::calculateStatus($qtyAvailable, $qtyOos);
 
                     StockRecord::updateOrCreate(
-                        ['store_id' => $store->id, 'date' => $date],
                         [
-                            'quantity_available' => $qtyAvailable,
-                            'quantity_oos' => $qtyOos,
-                            'status' => $status,
+                            'store_id' => $store->id,
+                            'stockdate' => $stockdate,
+                            'brand' => trim($row[$headerIndex['brand']] ?? ''),
+                        ],
+                        [
+                            'sap_id' => $sapId,
+                            'stock' => (int) ($row[$headerIndex['stock']] ?? 0),
+                            'stockc' => (int) ($row[$headerIndex['stockc']] ?? 0),
+                            'sellout' => (int) ($row[$headerIndex['sellout']] ?? 0),
+                            'dsi' => $dsi,
+                            'category' => $category,
+                            'jwk' => trim($row[$headerIndex['jwk']] ?? ''),
+                            'oos' => $oosStatus,
+                            'og_urgent' => (int) ($row[$headerIndex['og_urgent']] ?? 0),
+                            'og_total' => (int) ($row[$headerIndex['og_total']] ?? 0),
                         ]
                     );
 
@@ -664,92 +707,7 @@ class StockImportService
                         'row' => $rowNum,
                         'message' => $e->getMessage(),
                     ];
-                    Log::warning("Stock import error at row {$rowNum}: " . $e->getMessage());
-                }
-            }
-        });
-
-        return $results;
-    }
-}
-```
-
-### 6.2 StoreImportService.php
-```php
-<?php
-
-namespace App\Services;
-
-use App\Models\Store;
-use App\Models\Depot;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use PhpOffice\PhpSpreadsheet\IOFactory;
-
-class StoreImportService
-{
-    public function import($file): array
-    {
-        $results = ['success' => 0, 'failed' => 0, 'skipped' => 0, 'errors' => []];
-
-        DB::transaction(function () use ($file, &$results) {
-            $spreadsheet = IOFactory::load($file->getPathname());
-            $sheet = $spreadsheet->getActiveSheet();
-            $rows = $sheet->toArray();
-
-            // Skip header row
-            $header = array_shift($rows);
-
-            foreach ($rows as $index => $row) {
-                $rowNum = $index + 2;
-
-                try {
-                    $name = trim($row[0] ?? '');
-                    $address = trim($row[1] ?? '');
-                    $latitude = (float) ($row[2] ?? 0);
-                    $longitude = (float) ($row[3] ?? 0);
-                    $depotName = trim($row[4] ?? '');
-                    $contactPerson = trim($row[5] ?? '');
-                    $contactPhone = trim($row[6] ?? '');
-
-                    if (empty($name) || empty($address)) {
-                        throw new \Exception('Nama dan alamat wajib diisi');
-                    }
-
-                    if ($latitude == 0 || $longitude == 0) {
-                        throw new \Exception('Latitude dan longitude wajib diisi');
-                    }
-
-                    // Skip duplikat
-                    if (Store::where('name', $name)->exists()) {
-                        $results['skipped']++;
-                        continue;
-                    }
-
-                    $depot = Depot::where('name', $depotName)->first();
-                    if (!$depot) {
-                        throw new \Exception("Depo '{$depotName}' tidak ditemukan");
-                    }
-
-                    Store::create([
-                        'name' => $name,
-                        'address' => $address,
-                        'latitude' => $latitude,
-                        'longitude' => $longitude,
-                        'depot_id' => $depot->id,
-                        'contact_person' => $contactPerson,
-                        'contact_phone' => $contactPhone,
-                    ]);
-
-                    $results['success']++;
-                } catch (\Exception $e) {
-                    $results['failed']++;
-                    $results['errors'][] = [
-                        'row' => $rowNum,
-                        'store' => $row[0] ?? '',
-                        'message' => $e->getMessage(),
-                    ];
-                    Log::warning("Store import error at row {$rowNum}: " . $e->getMessage());
+                    Log::warning("Stock import error row {$rowNum}: " . $e->getMessage());
                 }
             }
         });
@@ -761,201 +719,80 @@ class StoreImportService
 
 ---
 
-## 7. Frontend Components (React + Inertia)
+## 7. DeliveryImportService.php
 
-### 7.1 AppLayout.jsx
-```jsx
-import { Link, usePage } from '@inertiajs/react';
-import Sidebar from './Sidebar';
+```php
+<?php
 
-export default function AppLayout({ children, title }) {
-    const { auth } = usePage().props;
+namespace App\Services;
 
-    return (
-        <div className="flex h-screen bg-gray-100">
-            <Sidebar />
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <header className="bg-white shadow-sm border-b px-6 py-4 flex justify-between items-center">
-                    <h1 className="text-xl font-semibold text-gray-800">{title}</h1>
-                    <div className="flex items-center gap-4">
-                        <span className="text-sm text-gray-600">{auth.user.name}</span>
-                        <Link
-                            href={route('logout')}
-                            method="post"
-                            className="text-sm text-red-600 hover:text-red-800"
-                        >
-                            Logout
-                        </Link>
-                    </div>
-                </header>
-                <main className="flex-1 overflow-auto p-6">
-                    {children}
-                </main>
-            </div>
-        </div>
-    );
-}
-```
+use App\Models\DeliveryStatus;
+use App\Models\Store;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
-### 7.2 Sidebar.jsx
-```jsx
-import { Link, usePage } from '@inertiajs/react';
+class DeliveryImportService
+{
+    public function import($file): array
+    {
+        $result = ['delivered' => 0, 'undelivered' => 0, 'errors' => []];
 
-const menuItems = [
-    { label: 'Dashboard', route: 'dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1' },
-    { label: 'Toko', route: 'stores.index', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
-    { label: 'Stok Harian', route: 'stocks.index', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
-    { label: 'Depo', route: 'depots.index', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
-];
+        DB::transaction(function () use ($file, &$result) {
+            $spreadsheet = IOFactory::load($file->getPathname());
+            $sheet = $spreadsheet->getActiveSheet();
+            $rows = $sheet->toArray();
+            $header = $rows[0];
 
-export default function Sidebar() {
-    const { url } = usePage();
+            $custIdx = array_search('Cust ID', $header);
+            $prodIdx = array_search('Product Name', $header);
+            $bbIdx = array_search('Billing Block', $header);
 
-    return (
-        <aside className="w-64 bg-gray-900 text-white flex flex-col">
-            <div className="p-4 border-b border-gray-700">
-                <h2 className="text-lg font-bold">OOS Monitor</h2>
-            </div>
-            <nav className="flex-1 p-4">
-                {menuItems.map((item) => (
-                    <Link
-                        key={item.route}
-                        href={route(item.route)}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-lg mb-2 transition ${
-                            url.startsWith(route(item.route).replace(window.location.origin, ''))
-                                ? 'bg-blue-600'
-                                : 'hover:bg-gray-800'
-                        }`}
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
-                        </svg>
-                        {item.label}
-                    </Link>
-                ))}
-            </nav>
-        </aside>
-    );
-}
-```
+            if ($custIdx === false || $prodIdx === false || $bbIdx === false)
+                throw new \Exception('Kolom Cust ID, Product Name, atau Billing Block tidak ditemukan');
 
-### 7.3 MapView.jsx
-```jsx
-import { useEffect, useRef } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+            $galonCustIds = [];
+            foreach ($rows as $r => $row) {
+                if ($r === 0) continue;
+                $prod = strtoupper(trim($row[$prodIdx] ?? ''));
+                if (!str_contains($prod, 'GALLON')) continue;
 
-const statusColors = {
-    available: '#10b981',
-    low_stock: '#f59e0b',
-    oos: '#ef4444',
-    no_data: '#9ca3af',
-};
+                $custId = trim($row[$custIdx] ?? '');
+                $bb = strtoupper(trim($row[$bbIdx] ?? ''));
 
-export default function MapView({ stores, height = '500px' }) {
-    const mapRef = useRef(null);
-    const mapInstance = useRef(null);
+                if (!isset($galonCustIds[$custId])) {
+                    $galonCustIds[$custId] = ['hasZ3' => false];
+                }
+                if ($bb === 'Z3') {
+                    $galonCustIds[$custId]['hasZ3'] = true;
+                }
+            }
 
-    useEffect(() => {
-        if (!mapRef.current || mapInstance.current) return;
+            $checkDate = now()->toDateString();
 
-        mapInstance.current = L.map(mapRef.current).setView([-6.2, 106.8], 10);
+            foreach ($galonCustIds as $custId => $data) {
+                try {
+                    $store = Store::where('sap_id', $custId)->first();
+                    if (!$store) continue;
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-        }).addTo(mapInstance.current);
+                    $status = $data['hasZ3'] ? 'UNDELIVERED' : 'DELIVERED';
 
-        stores.forEach((store) => {
-            const color = statusColors[store.status] || statusColors.no_data;
-            const marker = L.circleMarker([store.latitude, store.longitude], {
-                radius: 8,
-                fillColor: color,
-                color: '#fff',
-                weight: 2,
-                opacity: 1,
-                fillOpacity: 0.8,
-            }).addTo(mapInstance.current);
+                    DeliveryStatus::updateOrCreate(
+                        ['store_id' => $store->id, 'check_date' => $checkDate],
+                        ['sap_id' => $custId, 'status' => $status]
+                    );
 
-            marker.bindPopup(`
-                <div class="p-2">
-                    <h3 class="font-bold">${store.name}</h3>
-                    <p class="text-sm text-gray-600">${store.depot}</p>
-                    <p class="text-sm">Status: <span style="color:${color}">${store.status}</span></p>
-                    <p class="text-sm">Tersedia: ${store.quantity_available} | OOS: ${store.quantity_oos}</p>
-                </div>
-            `);
+                    if ($status === 'DELIVERED') $result['delivered']++;
+                    else $result['undelivered']++;
+                } catch (\Exception $e) {
+                    $result['errors'][] = ['cust_id' => $custId, 'message' => $e->getMessage()];
+                    Log::warning("Delivery import error for {$custId}: " . $e->getMessage());
+                }
+            }
         });
 
-        return () => {
-            mapInstance.current?.remove();
-            mapInstance.current = null;
-        };
-    }, [stores]);
-
-    return <div ref={mapRef} style={{ height }} className="rounded-lg z-0" />;
-}
-```
-
-### 7.4 FileUpload.jsx
-```jsx
-import { useState, useRef } from 'react';
-
-export default function FileUpload({ onFileSelect, accept = '.csv,.xlsx,.xls', templateUrl }) {
-    const [dragActive, setDragActive] = useState(false);
-    const [selectedFile, setSelectedFile] = useState(null);
-    const inputRef = useRef(null);
-
-    const handleFile = (file) => {
-        setSelectedFile(file);
-        onFileSelect(file);
-    };
-
-    const handleDrag = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setDragActive(e.type === 'dragenter' || e.type === 'dragover');
-    };
-
-    const handleDrop = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setDragActive(false);
-        if (e.dataTransfer.files?.[0]) {
-            handleFile(e.dataTransfer.files[0]);
-        }
-    };
-
-    return (
-        <div className="space-y-4">
-            {templateUrl && (
-                <a href={templateUrl} className="text-blue-600 hover:underline text-sm">
-                    Download Template CSV
-                </a>
-            )}
-            <div
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-                onClick={() => inputRef.current?.click()}
-                className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition ${
-                    dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
-                }`}
-            >
-                <input
-                    ref={inputRef}
-                    type="file"
-                    accept={accept}
-                    onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-                    className="hidden"
-                />
-                <p className="text-gray-600">
-                    {selectedFile ? selectedFile.name : 'Drag & drop file di sini atau klik untuk browse'}
-                </p>
-                <p className="text-xs text-gray-400 mt-2">Format: CSV, XLSX (Maks 10MB)</p>
-            </div>
-        </div>
-    );
+        return $result;
+    }
 }
 ```
 
@@ -966,117 +803,55 @@ export default function FileUpload({ onFileSelect, accept = '.csv,.xlsx,.xls', t
 ```php
 <?php
 
-use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\StoreController;
-use App\Http\Controllers\StockController;
+use App\Http\Controllers\DeliveryController;
 use App\Http\Controllers\DepotController;
+use App\Http\Controllers\StockController;
+use App\Http\Controllers\StoreController;
 use Illuminate\Support\Facades\Route;
-
-Route::get('login', [LoginController::class, 'create'])->name('login');
-Route::post('login', [LoginController::class, 'store']);
-Route::post('logout', [LoginController::class, 'destroy'])->name('logout');
 
 Route::middleware('auth')->group(function () {
     Route::get('/', fn () => redirect()->route('dashboard'));
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::resource('stores', StoreController::class);
-    Route::get('stores/import', [StoreController::class, 'import'])->name('stores.import');
-    Route::post('stores/import', [StoreController::class, 'processImport'])->name('stores.process-import');
+    Route::get('stores', [StoreController::class, 'index'])->name('stores.index');
+    Route::get('stores/{store}', [StoreController::class, 'show'])->name('stores.show');
 
     Route::get('stocks', [StockController::class, 'index'])->name('stocks.index');
     Route::get('stocks/upload', [StockController::class, 'upload'])->name('stocks.upload');
     Route::post('stocks/upload', [StockController::class, 'processUpload'])->name('stocks.process-upload');
-    Route::get('stocks/{store}', [StockController::class, 'history'])->name('stocks.history');
+    Route::get('stocks/{store}', [StockController::class, 'show'])->name('stocks.show');
 
-    Route::resource('depots', DepotController::class);
+    Route::resource('depots', DepotController::class)->except(['show']);
+    Route::get('depots/{depot}', [DepotController::class, 'show'])->name('depots.show');
+
+    Route::get('delivery/upload', [DeliveryController::class, 'upload'])->name('delivery.upload');
+    Route::post('delivery/upload', [DeliveryController::class, 'processUpload'])->name('delivery.process-upload');
 });
 ```
 
 ---
 
-## 9. Deployment (VPS)
+## 9. CSV Template
 
-### 9.1 Server Requirements
-- PHP 8.3+
-- MySQL 8.0+
-- Nginx
-- Node.js 20+
-- Composer
-- Supervisor (queue worker jika diperlukan)
-
-### 9.2 Nginx Config
-```nginx
-server {
-    listen 80;
-    server_name your-domain.com;
-    root /var/www/monitoring_oos/public;
-
-    index index.php;
-
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-
-    location ~ \.php$ {
-        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
-        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
-        include fastcgi_params;
-    }
-
-    location ~ /\.(?!well-known).* {
-        deny all;
-    }
-}
 ```
-
-### 9.3 Deployment Steps
-```bash
-# Clone repository
-git clone git@github.com:your-repo/monitoring_oos.git
-cd monitoring_oos
-
-# Install dependencies
-composer install --optimize-autoloader --no-dev
-npm install && npm run build
-
-# Setup environment
-cp .env.example .env
-php artisan key:generate
-
-# Configure .env
-DB_DATABASE=monitoring_oos
-DB_USERNAME=user
-DB_PASSWORD=password
-
-# Database setup
-php artisan migrate --force
-php artisan db:seed  # optional: seed sample data
-
-# Storage link
-php artisan storage:link
-
-# Cache optimization
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
+sap_id,outlet_id,outlet_name,account,region,source,supplier,brand,stockdate,stock,stockc,sellout,DSI,Category,jwk,oos,og_urgent,og_total
+950202119,F0L1,BOROBUDUR 2(F0L1),IDM,R3,Depo,9000 ID YOGYAKARTA DC TIV,AQUA,14/07/2026,2,2,0,0,RED,Jumat-Genap,YES,7,7
+950073961,F14Q,PAKEM 2-SLEMAN(F14Q),IDM,R3,Depo,9000 ID YOGYAKARTA DC TIV,AQUA,14/07/2026,15,15,0,4.79,YELLOW,Kamis,NO,0,0
 ```
 
 ---
 
-## 10. CSV Templates
+## 10. Delivery Upload (data adop delivery.xlsx)
 
-### 10.1 Template Import Toko (stores_import.csv)
-```
-name,address,latitude,longitude,depot_name,contact_person,contact_phone
-Toko ABC,Jl. Sudirman No. 1,-6.2088,106.8456,Depo Jakarta,Pak Budi,081234567890
-Toko DEF,Jl. Gatot Subroto No. 2,-6.2145,106.8523,Depo Jakarta,Ibu Sari,081234567891
-```
+File delivery dari SAP dengan struktur kolom:
+- `Cust ID` → sap_id di stores
+- `Product Name` → filter galon (mengandung "GALLON")
+- `Billing Block` → Z3 = belum terkirim
 
-### 10.2 Template Upload Stok (stock_upload.csv)
-```
-store_name,date,quantity_available,quantity_oos
-Toko ABC,2025-07-20,150,0
-Toko DEF,2025-07-20,0,25
-```
+Proses import:
+1. Baca semua baris
+2. Filter produk galon (`5 GALLON AQUA LOCAL`, `5 GALLON VIT LOCAL`)
+3. Group by Cust ID
+4. Jika ada Billing Block = Z3 → status UNDELIVERED
+5. Simpan ke `delivery_status` per (store_id, check_date)
