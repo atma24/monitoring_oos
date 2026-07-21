@@ -1,9 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import MainCard from '../../components/MainCard'
-import { createDepot } from '../../api/depots'
+import { createDepo } from '../../api/depo'
 
-export default function DepotCreate() {
+export default function DepoCreate() {
   const [name, setName] = useState('')
   const [address, setAddress] = useState('')
   const [contactPerson, setContactPerson] = useState('')
@@ -15,8 +15,8 @@ export default function DepotCreate() {
     e.preventDefault()
     setLoading(true)
     try {
-      await createDepot({ name, address, contact_person: contactPerson, contact_phone: contactPhone })
-      navigate('/depots')
+      await createDepo({ name, address, contact_person: contactPerson, contact_phone: contactPhone })
+      navigate('/depo')
     } finally {
       setLoading(false)
     }
@@ -24,7 +24,7 @@ export default function DepotCreate() {
 
   return (
     <div className="max-w-lg">
-      <button onClick={() => navigate('/depots')} className="text-sm text-[#04a9f5] hover:underline mb-4">&larr; Kembali</button>
+      <button onClick={() => navigate('/depo')} className="text-sm text-[#04a9f5] hover:underline mb-4">&larr; Kembali</button>
       <MainCard title="Tambah Depo">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -49,7 +49,7 @@ export default function DepotCreate() {
             <button type="submit" disabled={loading} className="btn-primary">
               {loading ? 'Menyimpan...' : 'Simpan'}
             </button>
-            <button type="button" onClick={() => navigate('/depots')} className="btn-light">
+            <button type="button" onClick={() => navigate('/depo')} className="btn-light">
               Batal
             </button>
           </div>

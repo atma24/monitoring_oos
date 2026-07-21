@@ -3,31 +3,31 @@ import { useNavigate } from 'react-router-dom'
 import Table from '../../components/Table'
 import Pagination from '../../components/Pagination'
 import MainCard from '../../components/MainCard'
-import { fetchDepots, deleteDepot } from '../../api/depots'
-import type { Depot } from '../../types'
+import { fetchDepo, deleteDepo } from '../../api/depo'
+import type { Depo } from '../../types'
 
-export default function DepotList() {
-  const [depots, setDepots] = useState<Depot[]>([])
+export default function DepoList() {
+  const [data, setData] = useState<Depo[]>([])
   const [meta, setMeta] = useState({ current_page: 1, last_page: 1, total: 0 })
   const navigate = useNavigate()
 
   useEffect(() => {
-    fetchDepots().then((res) => {
-      setDepots(res.data)
+    fetchDepo().then((res) => {
+      setData(res.data)
       setMeta(res.meta)
     })
   }, [])
 
   const handleDelete = async (id: number) => {
     if (!confirm('Yakin ingin menghapus depo ini?')) return
-    await deleteDepot(id)
+    await deleteDepo(id)
     window.location.reload()
   }
 
   return (
     <MainCard title="Daftar Depo">
       <div className="flex justify-end mb-4">
-        <button onClick={() => navigate('/depots/new')} className="btn-primary">
+        <button onClick={() => navigate('/depo/new')} className="btn-primary">
           + Tambah Depo
         </button>
       </div>
@@ -41,16 +41,16 @@ export default function DepotList() {
           {
             key: 'id',
             label: 'Aksi',
-            render: (row: Depot) => (
+            render: (row: Depo) => (
               <div className="flex gap-2">
-                <button onClick={(e) => { e.stopPropagation(); navigate(`/depots/${row.id}/edit`) }} className="text-[#04a9f5] hover:underline text-xs">Edit</button>
+                <button onClick={(e) => { e.stopPropagation(); navigate(`/depo/${row.id}/edit`) }} className="text-[#04a9f5] hover:underline text-xs">Edit</button>
                 <button onClick={(e) => { e.stopPropagation(); handleDelete(row.id) }} className="text-red-500 hover:underline text-xs">Hapus</button>
               </div>
             ),
           },
         ]}
-        data={depots}
-        onRowClick={(row) => navigate(`/depots/${row.id}`)}
+        data={data}
+        onRowClick={(row) => navigate(`/depo/${row.id}`)}
       />
 
       <Pagination currentPage={meta.current_page} lastPage={meta.last_page} onPageChange={() => {}} />

@@ -1,9 +1,9 @@
 import { useState, useEffect, type FormEvent } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import MainCard from '../../components/MainCard'
-import { fetchDepot, updateDepot } from '../../api/depots'
+import { fetchDepoById, updateDepo } from '../../api/depo'
 
-export default function DepotEdit() {
+export default function DepoEdit() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [name, setName] = useState('')
@@ -13,7 +13,7 @@ export default function DepotEdit() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (id) fetchDepot(Number(id)).then((res) => {
+    if (id) fetchDepoById(Number(id)).then((res) => {
       setName(res.data.name)
       setAddress(res.data.address || '')
       setContactPerson(res.data.contact_person || '')
@@ -25,8 +25,8 @@ export default function DepotEdit() {
     e.preventDefault()
     setLoading(true)
     try {
-      await updateDepot(Number(id), { name, address, contact_person: contactPerson, contact_phone: contactPhone })
-      navigate('/depots')
+      await updateDepo(Number(id), { name, address, contact_person: contactPerson, contact_phone: contactPhone })
+      navigate('/depo')
     } finally {
       setLoading(false)
     }
@@ -34,7 +34,7 @@ export default function DepotEdit() {
 
   return (
     <div className="max-w-lg">
-      <button onClick={() => navigate('/depots')} className="text-sm text-[#04a9f5] hover:underline mb-4">&larr; Kembali</button>
+      <button onClick={() => navigate('/depo')} className="text-sm text-[#04a9f5] hover:underline mb-4">&larr; Kembali</button>
       <MainCard title="Edit Depo">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -59,7 +59,7 @@ export default function DepotEdit() {
             <button type="submit" disabled={loading} className="btn-primary">
               {loading ? 'Menyimpan...' : 'Simpan'}
             </button>
-            <button type="button" onClick={() => navigate('/depots')} className="btn-light">
+            <button type="button" onClick={() => navigate('/depo')} className="btn-light">
               Batal
             </button>
           </div>

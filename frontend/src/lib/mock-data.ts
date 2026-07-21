@@ -1,4 +1,4 @@
-import type { Store, StockRecord, Depot, DashboardData } from '../types'
+import type { Store, StockRecord, Depo, DashboardData } from '../types'
 
 const regions = ['R1', 'R2', 'R3', 'R4', 'R5']
 const categories: Array<Store['category']> = ['RED', 'YELLOW', 'GREEN', 'NO_DATA']
@@ -113,7 +113,7 @@ export function generateStockHistory(storeId: number, days = 30): StockRecord[] 
   return records
 }
 
-export function generateDepots(): Depot[] {
+export function generateDepo(): Depo[] {
   return [
     { id: 1, name: 'Depo Yogyakarta', address: 'Jl. Magelang KM 5, Sleman', contact_person: 'Budi', contact_phone: '081234567890', created_at: '2025-01-15T00:00:00.000Z', updated_at: '2026-06-20T00:00:00.000Z' },
     { id: 2, name: 'Depo Surabaya', address: 'Jl. Raya Gedangan 12, Sidoarjo', contact_person: 'Siti', contact_phone: '081234567891', created_at: '2025-02-20T00:00:00.000Z', updated_at: '2026-05-15T00:00:00.000Z' },
@@ -234,32 +234,32 @@ export const mockApi = {
     }
   },
 
-  async getDepots(): Promise<{ data: Depot[]; meta: { current_page: number; last_page: number; per_page: number; total: number } }> {
+  async getDepo(): Promise<{ data: Depo[]; meta: { current_page: number; last_page: number; per_page: number; total: number } }> {
     await delay()
-    const data = generateDepots()
+    const data = generateDepo()
     return { data, meta: { current_page: 1, last_page: 1, per_page: 10, total: data.length } }
   },
 
-  async getDepot(_id: number): Promise<{ data: Depot }> {
+  async getDepoById(_id: number): Promise<{ data: Depo }> {
     await delay()
-    const depot = generateDepots().find((d) => d.id === _id)
-    if (!depot) throw new Error('Depot not found')
-    return { data: depot }
+    const depo = generateDepo().find((d) => d.id === _id)
+    if (!depo) throw new Error('Depo not found')
+    return { data: depo }
   },
 
-  async createDepot(input: Partial<Depot>): Promise<{ data: Depot; message: string }> {
+  async createDepo(input: Partial<Depo>): Promise<{ data: Depo; message: string }> {
     await delay(500)
-    const depot: Depot = { id: Date.now(), ...input } as Depot
-    return { data: depot, message: 'Depo berhasil ditambahkan' }
+    const depo: Depo = { id: Date.now(), ...input } as Depo
+    return { data: depo, message: 'Depo berhasil ditambahkan' }
   },
 
-  async updateDepot(id: number, input: Partial<Depot>): Promise<{ data: Depot; message: string }> {
+  async updateDepo(id: number, input: Partial<Depo>): Promise<{ data: Depo; message: string }> {
     await delay(500)
-    const depot = generateDepots().find((d) => d.id === id)!
-    return { data: { ...depot, ...input }, message: 'Depo berhasil diupdate' }
+    const depo = generateDepo().find((d) => d.id === id)!
+    return { data: { ...depo, ...input }, message: 'Depo berhasil diupdate' }
   },
 
-  async deleteDepot(_id: number): Promise<{ message: string }> {
+  async deleteDepo(_id: number): Promise<{ message: string }> {
     await delay(500)
     return { message: 'Depo berhasil dihapus' }
   },

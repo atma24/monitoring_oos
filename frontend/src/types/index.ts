@@ -34,7 +34,7 @@ export interface StockRecord {
   store?: Store;
 }
 
-export interface Depot {
+export interface Depo {
   id: number;
   name: string;
   address: string | null;

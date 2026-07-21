@@ -5,7 +5,7 @@ const navItems = [
   { icon: '🏪', label: 'Stores', to: '/stores' },
   { icon: '📦', label: 'Stocks', to: '/stocks' },
   { icon: '🚚', label: 'Delivery', to: '/delivery' },
-  { icon: '🏭', label: 'Depots', to: '/depots' },
+  { icon: '🏭', label: 'Depo', to: '/depo' },
 ]
 
 export default function Sidebar() {

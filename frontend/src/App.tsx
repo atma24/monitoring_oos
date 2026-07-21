@@ -8,10 +8,10 @@ import StockList from './pages/Stocks/StockList'
 import StockUpload from './pages/Stocks/StockUpload'
 import StockDetail from './pages/Stocks/StockDetail'
 import DeliveryUpload from './pages/Delivery/DeliveryUpload'
-import DepotList from './pages/Depots/DepotList'
-import DepotCreate from './pages/Depots/DepotCreate'
-import DepotDetail from './pages/Depots/DepotDetail'
-import DepotEdit from './pages/Depots/DepotEdit'
+import DepoList from './pages/Depo/DepoList'
+import DepoCreate from './pages/Depo/DepoCreate'
+import DepoDetail from './pages/Depo/DepoDetail'
+import DepoEdit from './pages/Depo/DepoEdit'
 
 function App() {
   return (
@@ -26,10 +26,10 @@ function App() {
           <Route path="/stocks/upload" element={<StockUpload />} />
           <Route path="/stocks/:storeId" element={<StockDetail />} />
           <Route path="/delivery" element={<DeliveryUpload />} />
-          <Route path="/depots" element={<DepotList />} />
-          <Route path="/depots/new" element={<DepotCreate />} />
-          <Route path="/depots/:id" element={<DepotDetail />} />
-          <Route path="/depots/:id/edit" element={<DepotEdit />} />
+          <Route path="/depo" element={<DepoList />} />
+          <Route path="/depo/new" element={<DepoCreate />} />
+          <Route path="/depo/:id" element={<DepoDetail />} />
+          <Route path="/depo/:id/edit" element={<DepoEdit />} />
         </Route>
       </Routes>
     </BrowserRouter>
