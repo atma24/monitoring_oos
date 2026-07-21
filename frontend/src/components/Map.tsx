@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react'
 import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
 
 interface MapPoint {
   id: number
@@ -30,10 +29,13 @@ export default function Map({ points, height = '400px' }: MapProps) {
   useEffect(() => {
     if (!mapRef.current || mapInstance.current) return
 
-    const map = L.map(mapRef.current).setView([-7.7956, 110.3695], 12)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
+    const map = L.map(mapRef.current, { zoomControl: false }).setView([-7.7956, 110.3695], 12)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>, &copy; CARTO',
+      subdomains: 'abcd',
     }).addTo(map)
+
+    L.control.zoom({ position: 'bottomright' }).addTo(map)
     mapInstance.current = map
 
     return () => {
@@ -49,13 +51,13 @@ export default function Map({ points, height = '400px' }: MapProps) {
     const markers = points.map((p) => {
       const color = categoryColors[p.category] || '#6b7280'
       const marker = L.circleMarker([p.lat, p.lng], {
-        radius: 8,
+        radius: 7,
         fillColor: color,
         color: '#fff',
-        weight: 2,
-        fillOpacity: 0.9,
+        weight: 2.5,
+        fillOpacity: 0.85,
       })
-      marker.bindPopup(`<b>${p.name}</b><br/>Category: ${p.category}<br/>OOS: ${p.oos}`)
+      marker.bindPopup(`<div class="leaflet-popup-content-custom"><strong>${p.name}</strong><br/><span>Category: ${p.category}</span><br/><span>OOS: ${p.oos}</span></div>`)
       return marker
     })
 
@@ -68,5 +70,5 @@ export default function Map({ points, height = '400px' }: MapProps) {
     }
   }, [points])
 
-  return <div ref={mapRef} style={{ height }} className="rounded-xl border" />
+  return <div ref={mapRef} style={{ height, background: '#f4f7fa' }} />
 }

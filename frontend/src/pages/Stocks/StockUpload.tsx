@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
 import FileUpload from '../../components/FileUpload'
 import MainCard from '../../components/MainCard'
 import { uploadStock } from '../../api/stocks'
@@ -28,14 +29,20 @@ export default function StockUpload() {
 
       {result && (
         <MainCard>
-          <p className="text-sm font-medium text-[#262626] mb-3">
-            ✅ {result.success} berhasil, ❌ {result.failed} gagal
+          <p className="text-sm font-medium text-[#262626] mb-3 flex items-center gap-2">
+            <CheckCircle size={18} className="text-green-500" />
+            {result.success} berhasil
+            <XCircle size={18} className="text-red-500 ml-2" />
+            {result.failed} gagal
           </p>
           {result.errors.length > 0 && (
             <div className="space-y-1">
               <p className="text-xs font-semibold text-red-600 uppercase">Error:</p>
               {result.errors.map((e, i) => (
-                <p key={i} className="text-sm text-red-600">⚠ Row {e.row}: {e.message}</p>
+                <p key={i} className="text-sm text-red-600 flex items-center gap-1">
+                  <AlertTriangle size={14} />
+                  Row {e.row}: {e.message}
+                </p>
               ))}
             </div>
           )}

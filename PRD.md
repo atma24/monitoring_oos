@@ -94,7 +94,7 @@ monitoring_oos/
 | created_at | timestamp | |
 | updated_at | timestamp | |
 
-### 3.2 depots
+### 3.2 depo
 | Field | Type | Note |
 |-------|------|------|
 | id | bigint PK | auto-increment |
@@ -161,12 +161,12 @@ Semua endpoint berada di `routes/api.php` dengan prefix `/api`. Frontend React m
 - `POST /api/stocks/upload` - Upload file CSV/XLSX
 - `GET /api/stocks/{store}` - Riwayat stok per toko
 
-### Depots
-- `GET /api/depots` - List depo
-- `POST /api/depots` - Tambah depo
-- `GET /api/depots/{id}` - Detail depo
-- `PUT /api/depots/{id}` - Update depo
-- `DELETE /api/depots/{id}` - Hapus depo
+### Depo
+- `GET /api/depo` - List depo
+- `POST /api/depo` - Tambah depo
+- `GET /api/depo/{id}` - Detail depo
+- `PUT /api/depo/{id}` - Update depo
+- `DELETE /api/depo/{id}` - Hapus depo
 
 ### Delivery
 - `POST /api/delivery/upload` - Upload file delivery
@@ -211,7 +211,7 @@ Semua endpoint berada di `routes/api.php` dengan prefix `/api`. Frontend React m
 3. **Stores** - Tabel + detail (termasuk status pengiriman)
 4. **Stocks** - Tabel + upload
 5. **Delivery** - Upload file delivery
-6. **Depots** - CRUD
+6. **Depo** - CRUD
 
 ### Non-Functional
 - Load time < 3 detik

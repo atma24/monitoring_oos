@@ -31,10 +31,10 @@ export default function StockDetail() {
       <button onClick={() => navigate('/stocks')} className="text-sm text-[#04a9f5] hover:underline">&larr; Kembali</button>
 
       <div className="grid grid-cols-4 gap-4">
-        <StatCard icon="📦" label="Rata-rata Stock" value={avgStock} />
-        <StatCard icon="📊" label="DSI Terakhir" value={latest?.dsi ?? 0} />
-        <StatCard icon="❗" label="Hari OOS" value={totalOos} />
-        <StatCard icon="🟢" label="Hari Data" value={records.length} />
+        <StatCard icon="package" label="Rata-rata Stock" value={avgStock} />
+        <StatCard icon="bar-chart" label="DSI Terakhir" value={latest?.dsi ?? 0} />
+        <StatCard icon="alert-triangle" label="Hari OOS" value={totalOos} />
+        <StatCard icon="check-circle" label="Hari Data" value={records.length} />
       </div>
 
       <MainCard title="Riwayat Stok (90 hari)">

@@ -31,7 +31,7 @@
 │ │  🏪 Stores│ │         CONTENT AREA                   ││
 │ │  📦 Stocks│ │   (stats cards, tables, map, forms)   ││
 │ │  🚚 Delivery││                                        ││
-│ │  🏭 Depots│ │                                        ││
+│ │  🏭 Depo  │ │                                        ││
 │ │          │ └────────────────────────────────────────┤│
 │ │  SIDEBAR │ │  Footer                                ││
 │ │  (w-64)  │ └────────────────────────────────────────┘│
@@ -57,7 +57,7 @@ const navItems = [
   { icon: '🏪', label: 'Stores', to: '/stores' },
   { icon: '📦', label: 'Stocks', to: '/stocks' },
   { icon: '🚚', label: 'Delivery', to: '/delivery' },
-  { icon: '🏭', label: 'Depots', to: '/depots' },
+  { icon: '🏭', label: 'Depo', to: '/depo' },
 ];
 
 export default function Sidebar() {
@@ -100,7 +100,7 @@ const pageTitles: Record<string, string> = {
   '/stores': 'Stores',
   '/stocks': 'Stocks',
   '/delivery': 'Delivery',
-  '/depots': 'Depots',
+  '/depo': 'Depo',
 };
 
 export default function Header() {
@@ -277,20 +277,20 @@ frontend/src/
 ├── App.tsx                  # Layout wrapper (Sidebar + Header + Outlet)
 ├── types/
 │   ├── store.ts             # Store, StockRecord, DeliveryStatus types
-│   ├── depot.ts             # Depot types
+│   ├── depo.ts              # Depo types
 │   ├── api.ts               # API response types (paginated, resources)
 │   └── index.ts             # Re-export
 ├── api/
 │   ├── client.ts            # Axios instance + interceptors
 │   ├── stores.ts            # Store API calls
 │   ├── stocks.ts            # Stock API calls
-│   ├── depots.ts            # Depot API calls
+│   ├── depo.ts              # Depo API calls
 │   └── delivery.ts          # Delivery API calls
 ├── hooks/
 │   ├── useAuth.ts           # Auth context + login/logout
 │   ├── useStores.ts         # React Query hooks for stores
 │   ├── useStocks.ts         # React Query hooks for stocks
-│   └── useDepots.ts         # React Query hooks for depots
+│   └── useDepo.ts           # React Query hooks for depo
 ├── components/
 │   ├── Layout.tsx            # Sidebar + Header + <Outlet />
 │   ├── Sidebar.tsx           # NavLink navigasi
@@ -313,11 +313,11 @@ frontend/src/
 │   │   └── StockDetail.tsx   # Riwayat stok per toko
 │   ├── Delivery/
 │   │   └── DeliveryUpload.tsx # Form upload delivery
-│   └── Depots/
-│       ├── DepotList.tsx     # List depo
-│       ├── DepotCreate.tsx   # Tambah depo
-│       ├── DepotDetail.tsx   # Detail depo
-│       └── DepotEdit.tsx     # Edit depo
+│   └── Depo/
+│       ├── DepoList.tsx      # List depo
+│       ├── DepoCreate.tsx    # Tambah depo
+│       ├── DepoDetail.tsx    # Detail depo
+│       └── DepoEdit.tsx      # Edit depo
 ├── lib/
 │   └── utils.ts             # Helper functions
 ├── tailwind.config.ts
@@ -366,8 +366,8 @@ export interface StockRecord {
   store?: Store;
 }
 
-// frontend/src/types/depot.ts
-export interface Depot {
+// frontend/src/types/depo.ts
+export interface Depo {
   id: number;
   name: string;
   address: string | null;
@@ -426,9 +426,9 @@ CREATE TABLE stores (
 ) ENGINE=InnoDB;
 ```
 
-### 3.2 depots
+### 3.2 depo
 ```sql
-CREATE TABLE depots (
+CREATE TABLE depo (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,
     address TEXT NULL,
@@ -935,15 +935,15 @@ class DepotController extends Controller
 {
     public function index(): JsonResponse
     {
-        $depots = Depot::orderBy('name')->paginate(20);
+        $depo = Depot::orderBy('name')->paginate(20);
 
         return response()->json([
-            'data' => DepotResource::collection($depots),
+            'data' => DepotResource::collection($depo),
             'meta' => [
-                'current_page' => $depots->currentPage(),
-                'last_page' => $depots->lastPage(),
-                'per_page' => $depots->perPage(),
-                'total' => $depots->total(),
+                'current_page' => $depo->currentPage(),
+                'last_page' => $depo->lastPage(),
+                'per_page' => $depo->perPage(),
+                'total' => $depo->total(),
             ],
         ]);
     }
@@ -951,7 +951,7 @@ class DepotController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:depots',
+            'name' => 'required|string|max:255|unique:depo',
             'address' => 'nullable|string',
             'contact_person' => 'nullable|string|max:255',
             'contact_phone' => 'nullable|string|max:50',
@@ -975,7 +975,7 @@ class DepotController extends Controller
     public function update(Request $request, Depot $depot): JsonResponse
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:depots,name,' . $depot->id,
+            'name' => 'required|string|max:255|unique:depo,name,' . $depot->id,
             'address' => 'nullable|string',
             'contact_person' => 'nullable|string|max:255',
             'contact_phone' => 'nullable|string|max:50',
@@ -1177,11 +1177,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('stocks/upload', [StockController::class, 'upload']);
     Route::get('stocks/{store}', [StockController::class, 'show']);
 
-    Route::get('depots', [DepotController::class, 'index']);
-    Route::post('depots', [DepotController::class, 'store']);
-    Route::get('depots/{depot}', [DepotController::class, 'show']);
-    Route::put('depots/{depot}', [DepotController::class, 'update']);
-    Route::delete('depots/{depot}', [DepotController::class, 'destroy']);
+    Route::get('depo', [DepotController::class, 'index']);
+    Route::post('depo', [DepotController::class, 'store']);
+    Route::get('depo/{depot}', [DepotController::class, 'show']);
+    Route::put('depo/{depot}', [DepotController::class, 'update']);
+    Route::delete('depo/{depot}', [DepotController::class, 'destroy']);
 
     Route::post('delivery/upload', [DeliveryController::class, 'upload']);
 });

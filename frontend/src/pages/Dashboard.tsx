@@ -33,12 +33,12 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-6 gap-4">
-        <StatCard icon="🏪" label="Total Toko" value={data.stats.total_stores} />
-        <StatCard icon="❗" label="OOS" value={data.stats.oos_count} />
-        <StatCard icon="🔴" label="RED" value={data.stats.red_count} />
-        <StatCard icon="🟡" label="YELLOW" value={data.stats.yellow_count} />
-        <StatCard icon="🟢" label="GREEN" value={data.stats.green_count} />
-        <StatCard icon="🚫" label="Blm Kirim" value="15" />
+        <StatCard icon="store" label="Total Toko" value={data.stats.total_stores} />
+        <StatCard icon="alert-triangle" label="OOS" value={data.stats.oos_count} />
+        <StatCard icon="alert-circle" label="RED" value={data.stats.red_count} />
+        <StatCard icon="clock" label="YELLOW" value={data.stats.yellow_count} />
+        <StatCard icon="check-circle" label="GREEN" value={data.stats.green_count} />
+        <StatCard icon="x-circle" label="Blm Kirim" value="15" />
       </div>
 
       <MainCard>
