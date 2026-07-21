@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { mockApi } from '../lib/mock-data'
+import client from '../api/client'
 import type { User } from '../types'
 
 export function useAuth() {
@@ -9,19 +9,27 @@ export function useAuth() {
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (token) {
-      setUser({ id: 1, name: 'Admin OOS', email: 'admin@oos.com' })
+      client.get<User>('/user')
+        .then(({ data }) => setUser(data))
+        .catch(() => {
+          localStorage.removeItem('token')
+          setUser(null)
+        })
+        .finally(() => setLoading(false))
+    } else {
+      setLoading(false)
     }
-    setLoading(false)
   }, [])
 
   const login = useCallback(async (email: string, password: string) => {
-    const data = await mockApi.login(email, password)
+    const { data } = await client.post<{ token: string; user: User }>('/login', { email, password })
     localStorage.setItem('token', data.token)
     setUser(data.user)
     return data
   }, [])
 
   const logout = useCallback(async () => {
+    try { await client.post('/logout') } catch {}
     localStorage.removeItem('token')
     setUser(null)
     window.location.href = '/login'

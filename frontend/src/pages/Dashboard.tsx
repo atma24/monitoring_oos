@@ -5,8 +5,24 @@ import Badge from '../components/Badge'
 import Map from '../components/Map'
 import MainCard from '../components/MainCard'
 import { fetchDashboard } from '../api/dashboard'
-import { getMapPoints } from '../lib/mock-data'
-import type { DashboardData } from '../types'
+import type { DashboardData, Store } from '../types'
+
+function randomCoord(base: number, range: number): number {
+  return parseFloat((base + (Math.random() - 0.5) * range).toFixed(6))
+}
+
+function getMapPoints(stores: Store[]) {
+  const baseLat = -7.7956
+  const baseLng = 110.3695
+  return stores.map((s) => ({
+    id: s.id,
+    name: s.outlet_name,
+    lat: randomCoord(baseLat, 0.15),
+    lng: randomCoord(baseLng, 0.15),
+    category: s.category,
+    oos: s.oos,
+  }))
+}
 
 const badgeVariant = (cat: string) => {
   if (cat === 'RED') return 'red'

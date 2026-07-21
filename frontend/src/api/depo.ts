@@ -1,22 +1,27 @@
-import { mockApi } from '../lib/mock-data'
-import type { Depo } from '../types'
+import client from './client'
+import type { Depo, PaginatedResponse } from '../types'
 
 export async function fetchDepo() {
-  return mockApi.getDepo()
+  const { data } = await client.get<PaginatedResponse<Depo>>('/depo')
+  return data
 }
 
 export async function fetchDepoById(id: number) {
-  return mockApi.getDepoById(id)
+  const { data } = await client.get<{ data: Depo }>(`/depo/${id}`)
+  return data
 }
 
 export async function createDepo(input: Partial<Depo>) {
-  return mockApi.createDepo(input)
+  const { data } = await client.post<{ data: Depo; message: string }>('/depo', input)
+  return data
 }
 
 export async function updateDepo(id: number, input: Partial<Depo>) {
-  return mockApi.updateDepo(id, input)
+  const { data } = await client.put<{ data: Depo; message: string }>(`/depo/${id}`, input)
+  return data
 }
 
 export async function deleteDepo(id: number) {
-  return mockApi.deleteDepo(id)
+  const { data } = await client.delete<{ message: string }>(`/depo/${id}`)
+  return data
 }

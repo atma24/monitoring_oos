@@ -1,22 +1,21 @@
-import { mockApi } from '../lib/mock-data'
-import type { Store, StockRecord } from '../types'
+import client from './client'
+import type { Store, StockRecord, PaginatedResponse } from '../types'
 
 export async function fetchStores(params?: { search?: string; region?: string; page?: number }) {
-  return mockApi.getStores(params)
+  const { data } = await client.get<PaginatedResponse<Store>>('/stores', { params })
+  return data
 }
 
 export async function fetchStore(id: number) {
-  return mockApi.getStore(id) as Promise<{ data: Store; stock_history: StockRecord[] }>
+  const { data } = await client.get<{ data: Store; stock_history: StockRecord[] }>(`/stores/${id}`)
+  return data
 }
 
-export async function fetchStoresGeoJson() {
-  const { data } = await mockApi.getStores()
-  return {
-    type: 'FeatureCollection' as const,
-    features: data.map((s) => ({
-      type: 'Feature' as const,
-      geometry: { type: 'Point' as const, coordinates: [0, 0] },
-      properties: { sap_id: s.sap_id, name: s.outlet_name, category: s.category, oos: s.oos },
-    })),
-  }
+export async function uploadStores(file: File) {
+  const form = new FormData()
+  form.append('file', file)
+  const { data } = await client.post('/stores/upload', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return data
 }

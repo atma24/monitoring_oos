@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
 import StoreList from './pages/Stores/StoreList'
 import StoreDetail from './pages/Stores/StoreDetail'
+import StoreUpload from './pages/Stores/StoreUpload'
 import StockList from './pages/Stocks/StockList'
 import StockUpload from './pages/Stocks/StockUpload'
 import StockDetail from './pages/Stocks/StockDetail'
@@ -21,6 +22,7 @@ function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/stores" element={<StoreList />} />
+          <Route path="/stores/upload" element={<StoreUpload />} />
           <Route path="/stores/:id" element={<StoreDetail />} />
           <Route path="/stocks" element={<StockList />} />
           <Route path="/stocks/upload" element={<StockUpload />} />

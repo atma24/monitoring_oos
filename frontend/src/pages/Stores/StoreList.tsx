@@ -54,6 +54,9 @@ export default function StoreList() {
             <option key={r} value={r}>{r}</option>
           ))}
         </select>
+        <button onClick={() => navigate('/stores/upload')} className="btn-primary ml-auto">
+          Upload Toko
+        </button>
       </div>
 
       <Table
