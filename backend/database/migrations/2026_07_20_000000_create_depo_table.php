@@ -19,6 +19,8 @@ return new class extends Migration
             $table->string('postal_code', 20)->nullable();
             $table->string('contact_person')->nullable();
             $table->string('contact_phone')->nullable();
+            $table->decimal('latitude', 10, 7)->nullable();
+            $table->decimal('longitude', 10, 7)->nullable();
             $table->timestamps();
         });
     }
