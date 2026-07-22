@@ -23,18 +23,16 @@ export default function StockDetail() {
   }, [storeId])
 
   const latest = records[0]
-  const avgStock = records.length ? Math.round(records.reduce((a, r) => a + r.stock, 0) / records.length) : 0
-  const totalOos = records.filter((r) => r.oos === 'YES').length
 
   return (
     <div className="space-y-6">
       <button onClick={() => navigate('/stocks')} className="text-sm text-[#04a9f5] hover:underline">&larr; Kembali</button>
 
       <div className="grid grid-cols-4 gap-4">
-        <StatCard icon="package" label="Rata-rata Stock" value={avgStock} />
         <StatCard icon="bar-chart" label="DSI Terakhir" value={latest?.dsi ?? 0} />
-        <StatCard icon="alert-triangle" label="Hari OOS" value={totalOos} />
         <StatCard icon="check-circle" label="Hari Data" value={records.length} />
+        <StatCard icon="alert-circle" label="Category" value={latest?.category ?? '-'} />
+        <StatCard icon="clock" label="JWK" value={latest?.jwk ?? '-'} />
       </div>
 
       <MainCard title="Riwayat Stok (90 hari)">
@@ -42,7 +40,7 @@ export default function StockDetail() {
           <table className="pc-table w-full text-sm">
             <thead>
               <tr>
-                {['Tanggal', 'Brand', 'Stock', 'Sellout', 'DSI', 'Category', 'OOS', 'OG'].map((h) => (
+                {['Tanggal', 'DSI', 'Category', 'OG Urgent'].map((h) => (
                   <th key={h}>{h}</th>
                 ))}
               </tr>
@@ -51,13 +49,9 @@ export default function StockDetail() {
               {records.map((r) => (
                 <tr key={r.id}>
                   <td>{r.stockdate}</td>
-                  <td>{r.brand}</td>
-                  <td>{r.stock}</td>
-                  <td>{r.sellout}</td>
                   <td>{r.dsi}</td>
                   <td><Badge variant={badgeVariant(r.category)}>{r.category}</Badge></td>
-                  <td><span className={r.oos === 'YES' ? 'text-red-600 font-semibold' : 'text-green-600 font-semibold'}>{r.oos}</span></td>
-                  <td>{r.og_urgent}/{r.og_total}</td>
+                  <td>{r.og_urgent_date ?? '-'}</td>
                 </tr>
               ))}
             </tbody>

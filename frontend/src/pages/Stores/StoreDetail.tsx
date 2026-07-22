@@ -12,8 +12,6 @@ const badgeVariant = (cat: string) => {
   return 'gray'
 }
 
-const oosStyle = (v: string) => v === 'YES' ? 'text-red-600 font-semibold' : 'text-green-600 font-semibold'
-
 export default function StoreDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -40,13 +38,9 @@ export default function StoreDetail() {
         </div>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div><span className="text-[#8996a4]">SAP ID:</span> <span className="font-mono">{store.sap_id}</span></div>
-          <div><span className="text-[#8996a4]">Outlet ID:</span> {store.outlet_id}</div>
-          <div><span className="text-[#8996a4]">Region:</span> {store.region}</div>
-          <div><span className="text-[#8996a4]">Account:</span> {store.account}</div>
-          <div><span className="text-[#8996a4]">Supplier:</span> {store.supplier}</div>
-          <div><span className="text-[#8996a4]">OOS:</span> <span className={oosStyle(store.oos)}>{store.oos}</span></div>
+          <div><span className="text-[#8996a4]">Alamat:</span> {[store.street, store.city, store.postal_code].filter(Boolean).join(', ') || '-'}</div>
           <div><span className="text-[#8996a4]">DSI:</span> {store.dsi}</div>
-          <div><span className="text-[#8996a4]">Stock:</span> {store.stock}</div>
+          <div><span className="text-[#8996a4]">Category:</span> <Badge variant={badgeVariant(store.category)}>{store.category}</Badge></div>
         </div>
       </MainCard>
 
@@ -55,7 +49,7 @@ export default function StoreDetail() {
           <table className="pc-table w-full text-sm">
             <thead>
               <tr>
-                {['Tanggal', 'Brand', 'Stock', 'Sellout', 'DSI', 'Category', 'OOS', 'OG'].map((h) => (
+                {['Tanggal', 'DSI', 'Category', 'OG Urgent'].map((h) => (
                   <th key={h}>{h}</th>
                 ))}
               </tr>
@@ -64,13 +58,9 @@ export default function StoreDetail() {
               {history.map((r) => (
                 <tr key={r.id}>
                   <td>{r.stockdate}</td>
-                  <td>{r.brand}</td>
-                  <td>{r.stock}</td>
-                  <td>{r.sellout}</td>
                   <td>{r.dsi}</td>
                   <td><Badge variant={badgeVariant(r.category)}>{r.category}</Badge></td>
-                  <td><span className={oosStyle(r.oos)}>{r.oos}</span></td>
-                  <td>{r.og_urgent}/{r.og_total}</td>
+                  <td>{r.og_urgent_date ?? '-'}</td>
                 </tr>
               ))}
             </tbody>

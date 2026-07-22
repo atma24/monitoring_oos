@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Store extends Model
 {
     protected $fillable = [
-        'sap_id', 'outlet_name', 'street', 'city', 'postal_code', 'depo_id',
+        'sap_id', 'outlet_name', 'street', 'city', 'postal_code', 'latitude', 'longitude', 'depo_id',
     ];
 
     public function stockRecords(): HasMany
@@ -35,6 +35,6 @@ class Store extends Model
 
     public function depo(): BelongsTo
     {
-        return $this->belongsTo(Depot::class, 'depo_id');
+        return $this->belongsTo(Depo::class, 'depo_id');
     }
 }

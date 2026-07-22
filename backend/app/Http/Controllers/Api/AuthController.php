@@ -77,7 +77,15 @@ class AuthController extends Controller
             'created_at' => $u->created_at,
         ]);
 
-        return response()->json($users);
+        return response()->json([
+            'data' => $users->items(),
+            'meta' => [
+                'current_page' => $users->currentPage(),
+                'last_page' => $users->lastPage(),
+                'per_page' => $users->perPage(),
+                'total' => $users->total(),
+            ],
+        ]);
     }
 
     public function createUser(Request $request): JsonResponse

@@ -17,15 +17,12 @@ class DashboardController extends Controller
         $date = $request->input('date', now()->toDateString());
 
         $storesQuery = Store::query();
-        $this->applyDepoFilter($storesQuery, $request, 'stores');
+        $this->applyDepoFilter($storesQuery, $request);
 
         $storeIds = (clone $storesQuery)->pluck('id');
 
         $stats = [
             'total_stores' => (clone $storesQuery)->count(),
-            'oos_count' => Store::whereIn('id', $storeIds)->whereHas('latestStock', function ($q) use ($date) {
-                $q->where('stockdate', $date)->where('oos', 'YES');
-            })->count(),
             'red_count' => Store::whereIn('id', $storeIds)->whereHas('latestStock', function ($q) use ($date) {
                 $q->where('stockdate', $date)->where('category', 'RED');
             })->count(),

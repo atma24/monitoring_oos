@@ -3,7 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DeliveryController;
-use App\Http\Controllers\Api\DepotController;
+use App\Http\Controllers\Api\DepoController;
 use App\Http\Controllers\Api\StockController;
 use App\Http\Controllers\Api\StoreController;
 use Illuminate\Support\Facades\Route;
@@ -23,17 +23,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('stocks', [StockController::class, 'index']);
     Route::get('stocks/{store}', [StockController::class, 'show']);
 
-    Route::get('depo', [DepotController::class, 'index']);
-    Route::get('depo/{depot}', [DepotController::class, 'show']);
+    Route::get('depo', [DepoController::class, 'index']);
+    Route::get('depo/{depo}', [DepoController::class, 'show']);
 
     // Role: admin & kepala_distribusi (canWrite)
     Route::middleware('role:admin,kepala_distribusi')->group(function () {
         Route::post('stocks/upload', [StockController::class, 'upload']);
         Route::post('stores/upload', [StoreController::class, 'upload']);
         Route::post('delivery/upload', [DeliveryController::class, 'upload']);
-        Route::post('depo', [DepotController::class, 'store']);
-        Route::put('depo/{depot}', [DepotController::class, 'update']);
-        Route::delete('depo/{depot}', [DepotController::class, 'destroy']);
+        Route::post('depo', [DepoController::class, 'store']);
+        Route::put('depo/{depo}', [DepoController::class, 'update']);
+        Route::delete('depo/{depo}', [DepoController::class, 'destroy']);
     });
 
     // Role: admin only (canManageUsers)

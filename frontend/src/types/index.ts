@@ -1,17 +1,16 @@
 export interface Store {
   id: number;
   sap_id: string;
-  outlet_id: string;
   outlet_name: string;
-  account: string | null;
-  region: string | null;
-  source: string | null;
-  supplier: string | null;
+  street: string | null;
+  city: string | null;
+  postal_code: string | null;
+  latitude: number | null;
+  longitude: number | null;
   category: 'RED' | 'YELLOW' | 'GREEN' | 'NO_DATA';
-  stock: number;
-  oos: 'YES' | 'NO';
   dsi: number;
   latest_delivery: 'DELIVERED' | 'UNDELIVERED' | null;
+  depo_id: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -21,16 +20,16 @@ export interface StockRecord {
   store_id: number;
   sap_id: string;
   stockdate: string;
-  brand: string | null;
-  stock: number;
-  stockc: number;
-  sellout: number;
+  og_urgent_date: string | null;
+  account: string | null;
+  outlet_name: string;
+  source: string | null;
+  region: string | null;
+  supplier: string | null;
+  jwk: string | null;
   dsi: number;
   category: 'RED' | 'YELLOW' | 'GREEN';
-  jwk: string | null;
-  oos: 'YES' | 'NO';
-  og_urgent: number;
-  og_total: number;
+  depo_id: number | null;
   store?: Store;
 }
 
@@ -48,8 +47,21 @@ export interface DeliveryStatus {
   id: number;
   store_id: number;
   sap_id: string;
+  site_name: string | null;
+  cust_name: string | null;
+  sales_type: string | null;
+  po_number: string | null;
+  so_number: string | null;
+  product_id: string | null;
+  product_name: string | null;
+  orig_deliv_date: string | null;
+  po_qty: number;
+  do_qty: number;
+  billing_block: string | null;
+  driver_name: string | null;
   status: 'DELIVERED' | 'UNDELIVERED';
   check_date: string;
+  depo_id: number | null;
   store?: Store;
 }
 
@@ -66,7 +78,6 @@ export interface PaginatedResponse<T> {
 export interface DashboardData {
   stats: {
     total_stores: number;
-    oos_count: number;
     red_count: number;
     yellow_count: number;
     green_count: number;

@@ -19,16 +19,15 @@ export default function StockList() {
   const [meta, setMeta] = useState({ current_page: 1, last_page: 1, total: 0 })
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [category, setCategory] = useState('')
-  const [oos, setOos] = useState('')
   const [page, setPage] = useState(1)
   const navigate = useNavigate()
 
   useEffect(() => {
-    fetchStocks({ stockdate: date, category, oos, page }).then((res) => {
+    fetchStocks({ stockdate: date, category, page }).then((res) => {
       setRecords(res.data)
       setMeta(res.meta)
     })
-  }, [date, category, oos, page])
+  }, [date, category, page])
 
   return (
     <MainCard title="Data Stock">
@@ -40,11 +39,12 @@ export default function StockList() {
           <option value="YELLOW">YELLOW</option>
           <option value="GREEN">GREEN</option>
         </select>
-        <select value={oos} onChange={(e) => { setOos(e.target.value); setPage(1) }} className="border border-[#f1f1f1] rounded-none px-3 py-2 text-sm focus:outline-none focus:border-[#04a9f5]">
-          <option value="">Semua OOS</option>
-          <option value="YES">YES</option>
-          <option value="NO">NO</option>
-        </select>
+        <input
+          value={date}
+          onChange={(e) => { setDate(e.target.value); setPage(1) }}
+          type="date"
+          className="border border-[#f1f1f1] rounded-none px-3 py-2 text-sm focus:outline-none focus:border-[#04a9f5]"
+        />
         <button onClick={() => navigate('/stocks/upload')} className="btn-primary ml-auto">
           Upload Stok
         </button>
@@ -54,13 +54,11 @@ export default function StockList() {
         columns={[
           { key: 'stockdate', label: 'Tanggal', sortable: true },
           { key: 'sap_id', label: 'SAP ID', sortable: true },
-          { key: 'store_id', label: 'Toko', render: (row: StockRecord) => `Toko #${row.store_id}` },
-          { key: 'stock', label: 'Stock', sortable: true },
-          { key: 'sellout', label: 'SO', sortable: true },
+          { key: 'outlet_name', label: 'Toko' },
+          { key: 'region', label: 'Region' },
           { key: 'dsi', label: 'DSI', sortable: true },
           { key: 'category', label: 'Cat', sortable: true, render: (row: StockRecord) => <Badge variant={badgeVariant(row.category)}>{row.category}</Badge> },
-          { key: 'oos', label: 'OOS', sortable: true, render: (row: StockRecord) => <span className={row.oos === 'YES' ? 'text-red-600 font-semibold' : 'text-green-600 font-semibold'}>{row.oos}</span> },
-          { key: 'og_total', label: 'OG', render: (row: StockRecord) => `${row.og_urgent}/${row.og_total}` },
+          { key: 'og_urgent_date', label: 'OG Urgent' },
         ]}
         data={records}
         onRowClick={(row) => navigate(`/stocks/${row.store_id}`)}

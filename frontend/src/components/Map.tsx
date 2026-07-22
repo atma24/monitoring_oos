@@ -7,7 +7,7 @@ interface MapPoint {
   lat: number
   lng: number
   category: string
-  oos: string
+  city: string | null
 }
 
 interface MapProps {
@@ -57,7 +57,7 @@ export default function Map({ points, height = '400px' }: MapProps) {
         weight: 2.5,
         fillOpacity: 0.85,
       })
-      marker.bindPopup(`<div class="leaflet-popup-content-custom"><strong>${p.name}</strong><br/><span>Category: ${p.category}</span><br/><span>OOS: ${p.oos}</span></div>`)
+      marker.bindPopup(`<div class="leaflet-popup-content-custom"><strong>${p.name}</strong><br/><span>Category: ${p.category}</span>${p.city ? `<br/><span>${p.city}</span>` : ''}</div>`)
       return marker
     })
 

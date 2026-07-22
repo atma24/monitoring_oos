@@ -24,16 +24,16 @@ export default function StoreList() {
   const [stores, setStores] = useState<Store[]>([])
   const [meta, setMeta] = useState({ current_page: 1, last_page: 1, total: 0 })
   const [search, setSearch] = useState('')
-  const [region, setRegion] = useState('')
+  const [city, setCity] = useState('')
   const [page, setPage] = useState(1)
   const navigate = useNavigate()
 
   useEffect(() => {
-    fetchStores({ search, region, page }).then((res) => {
+    fetchStores({ search, city, page }).then((res) => {
       setStores(res.data)
       setMeta(res.meta)
     })
-  }, [search, region, page])
+  }, [search, city, page])
 
   return (
     <MainCard title="Daftar Toko">
@@ -41,19 +41,15 @@ export default function StoreList() {
         <input
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-          placeholder="Cari SAP ID / Nama / Outlet..."
+          placeholder="Cari SAP ID / Nama Toko..."
           className="border border-[#f1f1f1] rounded-none px-3 py-2 text-sm w-64 focus:outline-none focus:border-[#04a9f5]"
         />
-        <select
-          value={region}
-          onChange={(e) => { setRegion(e.target.value); setPage(1) }}
-          className="border border-[#f1f1f1] rounded-none px-3 py-2 text-sm focus:outline-none focus:border-[#04a9f5]"
-        >
-          <option value="">Semua Region</option>
-          {['R1', 'R2', 'R3', 'R4', 'R5'].map((r) => (
-            <option key={r} value={r}>{r}</option>
-          ))}
-        </select>
+        <input
+          value={city}
+          onChange={(e) => { setCity(e.target.value); setPage(1) }}
+          placeholder="Filter Kota..."
+          className="border border-[#f1f1f1] rounded-none px-3 py-2 text-sm w-48 focus:outline-none focus:border-[#04a9f5]"
+        />
         <button onClick={() => navigate('/stores/upload')} className="btn-primary ml-auto">
           Upload Toko
         </button>
@@ -63,23 +59,13 @@ export default function StoreList() {
         columns={[
           { key: 'sap_id', label: 'SAP ID', sortable: true },
           { key: 'outlet_name', label: 'Nama Toko', sortable: true },
-          { key: 'outlet_id', label: 'Outlet', sortable: true },
-          { key: 'region', label: 'Region', sortable: true },
+          { key: 'city', label: 'Kota', sortable: true },
+          { key: 'street', label: 'Alamat' },
           {
             key: 'category',
             label: 'Category',
             sortable: true,
             render: (row: Store) => <Badge variant={badgeVariant(row.category)}>{row.category}</Badge>,
-          },
-          {
-            key: 'oos',
-            label: 'OOS',
-            sortable: true,
-            render: (row: Store) => (
-              <span className={row.oos === 'YES' ? 'text-red-600 font-semibold' : 'text-green-600 font-semibold'}>
-                {row.oos}
-              </span>
-            ),
           },
           {
             key: 'latest_delivery',

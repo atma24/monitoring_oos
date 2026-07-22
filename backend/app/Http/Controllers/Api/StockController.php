@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Traits\FiltersByDepo;
 use App\Models\StockRecord;
 use App\Models\Store;
+use App\Services\StockImportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -16,7 +17,7 @@ class StockController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = StockRecord::with('store');
-        $this->applyDepoFilter($query, $request, 'stores');
+        $this->applyDepoFilter($query, $request);
 
         if ($request->filled('stockdate'))
             $query->where('stockdate', $request->stockdate);
@@ -24,17 +25,18 @@ class StockController extends Controller
             $query->where('store_id', $request->store_id);
         if ($request->filled('category'))
             $query->where('category', $request->category);
-        if ($request->filled('oos'))
-            $query->where('oos', $request->oos);
 
-        $user = $request->user();
-        if ($user && $user->depo_id) {
-            $query->whereHas('store', fn ($q) => $q->where('depo_id', $user->depo_id));
-        }
+        $paginated = $query->orderByDesc('stockdate')->paginate(20);
 
-        $records = $query->orderByDesc('stockdate')->paginate(20);
-
-        return response()->json($records);
+        return response()->json([
+            'data' => $paginated->items(),
+            'meta' => [
+                'current_page' => $paginated->currentPage(),
+                'last_page' => $paginated->lastPage(),
+                'per_page' => $paginated->perPage(),
+                'total' => $paginated->total(),
+            ],
+        ]);
     }
 
     public function upload(Request $request): JsonResponse
@@ -43,9 +45,11 @@ class StockController extends Controller
             'file' => 'required|file|mimes:csv,xlsx,xls|max:10240',
         ]);
 
+        $result = app(StockImportService::class)->import($request->file('file'));
+
         return response()->json([
-            'message' => 'Upload berhasil',
-            'data' => ['success' => 0, 'failed' => 0],
+            'message' => "Upload selesai. Berhasil: {$result['success']}, Gagal: {$result['failed']}",
+            'data' => $result,
         ]);
     }
 

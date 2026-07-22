@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\Role;
-use App\Models\Depot;
+use App\Models\Depo;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -13,23 +13,14 @@ class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        $depo1 = Depot::create([
-            'name' => 'Depo Yogyakarta',
-            'address' => 'Jl. Yogyakarta No. 1',
-            'contact_person' => 'Budi',
-            'contact_phone' => '081234567890',
-        ]);
-
-        $depo2 = Depot::create([
-            'name' => 'Depo Solo',
-            'address' => 'Jl. Solo No. 1',
-            'contact_person' => 'Ani',
-            'contact_phone' => '081234567891',
+        $depo1 = Depo::create([
+            'id' => 9030,
+            'name' => 'Depo Yogyakarta (AQUA)',
+            'address' => 'Jalan Magelang No.Km 8, Mulungan Wetan, Sendangadi, Kec. Mlati, Kabupaten Sleman, Daerah Istimewa Yogyakarta 55285',
+            'city' => 'YOGYAKARTA',
+            'postal_code' => '55285',
         ]);
 
         User::create([
@@ -37,6 +28,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@example.com',
             'password' => Hash::make('password'),
             'role' => Role::Admin,
+            'depo_id' => $depo1->id,
         ]);
 
         User::create([
@@ -44,6 +36,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'kepala@example.com',
             'password' => Hash::make('password'),
             'role' => Role::KepalaDistribusi,
+            'depo_id' => $depo1->id,
         ]);
 
         User::create([
@@ -52,14 +45,6 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password'),
             'role' => Role::SupervisorDistribusi,
             'depo_id' => $depo1->id,
-        ]);
-
-        User::create([
-            'name' => 'Supervisor Solo',
-            'email' => 'supervisor2@example.com',
-            'password' => Hash::make('password'),
-            'role' => Role::SupervisorDistribusi,
-            'depo_id' => $depo2->id,
         ]);
     }
 }

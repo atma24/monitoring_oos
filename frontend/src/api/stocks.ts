@@ -1,7 +1,7 @@
 import client from './client'
 import type { StockRecord, PaginatedResponse } from '../types'
 
-export async function fetchStocks(params?: { stockdate?: string; category?: string; oos?: string; page?: number }) {
+export async function fetchStocks(params?: { stockdate?: string; category?: string; page?: number }) {
   const { data } = await client.get<PaginatedResponse<StockRecord>>('/stocks', { params })
   return data
 }
