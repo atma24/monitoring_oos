@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Store, Package, Truck, Warehouse } from 'lucide-react'
+import { LayoutDashboard, Store, Package, Truck, Warehouse, Users } from 'lucide-react'
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', to: '/' },
@@ -7,6 +7,7 @@ const navItems = [
   { icon: Package, label: 'Stocks', to: '/stocks' },
   { icon: Truck, label: 'Delivery', to: '/delivery' },
   { icon: Warehouse, label: 'Depo', to: '/depo' },
+  { icon: Users, label: 'Users', to: '/users' },
 ]
 
 export default function Sidebar() {

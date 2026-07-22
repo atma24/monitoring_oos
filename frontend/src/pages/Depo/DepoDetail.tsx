@@ -27,9 +27,7 @@ export default function DepoDetail() {
           <div><span className="text-[#8996a4]">No. Telepon:</span> {depo.contact_phone || '-'}</div>
         </div>
         <div className="flex gap-3 pt-4">
-          <button onClick={() => navigate(`/depo/${depo.id}/edit`)} className="btn-primary">
-            Edit
-          </button>
+          <button onClick={() => navigate(`/depo/${depo.id}/edit`)} className="btn-primary">Edit</button>
         </div>
       </MainCard>
     </div>

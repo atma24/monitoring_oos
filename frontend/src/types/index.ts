@@ -75,10 +75,23 @@ export interface DashboardData {
   selected_date: string;
 }
 
+export type UserRole = 'admin' | 'kepala_distribusi' | 'supervisor_distribusi'
+
 export interface User {
   id: number;
   name: string;
   email: string;
+  role: UserRole;
+}
+
+export interface UserListItem {
+  id: number;
+  name: string;
+  email: string;
+  role: UserRole;
+  depo_id: number | null;
+  depo: Depo | null;
+  created_at: string;
 }
 
 export interface ApiError {

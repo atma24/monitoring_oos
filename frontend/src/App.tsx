@@ -13,6 +13,7 @@ import DepoList from './pages/Depo/DepoList'
 import DepoCreate from './pages/Depo/DepoCreate'
 import DepoDetail from './pages/Depo/DepoDetail'
 import DepoEdit from './pages/Depo/DepoEdit'
+import UserList from './pages/Users/UserList'
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
           <Route path="/depo/new" element={<DepoCreate />} />
           <Route path="/depo/:id" element={<DepoDetail />} />
           <Route path="/depo/:id/edit" element={<DepoEdit />} />
+          <Route path="/users" element={<UserList />} />
         </Route>
       </Routes>
     </BrowserRouter>
