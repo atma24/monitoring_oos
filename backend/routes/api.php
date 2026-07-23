@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\StoreController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\StockRecordController;
 use App\Http\Controllers\Api\DeliveryStatusController;
-
+use App\Http\Controllers\Api\DashboardController;
 // Rute Publik
 Route::post('login', [AuthController::class, 'login']);
 
@@ -14,8 +14,7 @@ Route::post('login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('user', [AuthController::class, 'user']);
     Route::post('logout', [AuthController::class, 'logout']);
-
-    // --- Rute Read-Only (Bisa diakses Supervisor juga) ---
+    Route::get('dashboard', [DashboardController::class, 'index']);
     Route::get('depo', [DepoController::class, 'index']);
     Route::get('depo/{depo}', [DepoController::class, 'show']);
     Route::get('stores', [StoreController::class, 'index']);

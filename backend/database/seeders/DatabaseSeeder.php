@@ -14,9 +14,10 @@ class DatabaseSeeder extends Seeder
         // Buat 1 Depo awal
         $depo = Depo::create([
             'id' => 9030,
-            'name' => 'Depo Pusat Bekasi',
-            'address' => 'Jl. Jend. Sudirman, Bekasi',
-            'city' => 'Bekasi',
+            'name' => 'Depo Yogyakarta',
+            'address' => 'Jalan Magelang No.Km 8, Mulungan Wetan, Sendangadi, Kec. Mlati, Kabupaten Sleman',
+            'postal_code' => '55285',
+            'city' => 'Yogyakarta',
         ]);
 
         // 1. Akun Admin (Akses Penuh)
