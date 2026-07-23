@@ -17,6 +17,8 @@ public function up(): void
         $table->text('address')->nullable();
         $table->string('city')->nullable();
         $table->string('postal_code', 20)->nullable();
+        $table->decimal('latitude', 10, 7)->nullable();
+        $table->decimal('longitude', 10, 7)->nullable();
         $table->string('contact_person')->nullable();
         $table->string('contact_phone')->nullable();
         $table->timestamps();
