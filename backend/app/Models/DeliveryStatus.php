@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DeliveryStatus extends Model
 {
+    // Mengarahkan ke nama tabel yang tepat sesuai migration
+    protected $table = 'delivery_status';
+
     protected $fillable = [
         'store_id', 'sap_id', 'site_name', 'cust_name',
         'sales_type', 'po_number', 'so_number', 'product_id',

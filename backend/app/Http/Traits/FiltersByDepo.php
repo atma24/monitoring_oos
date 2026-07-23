@@ -2,21 +2,21 @@
 
 namespace App\Http\Traits;
 
-use App\Enums\Role;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 trait FiltersByDepo
 {
-    protected function applyDepoFilter(Builder $query, Request $request): Builder
+    /**
+     * Membatasi query agar SEMUA ROLE hanya bisa melihat data di deponya sendiri.
+     */
+    public function applyDepoFilter(Builder $query, Request $request): void
     {
         $user = $request->user();
-
-        if ($user && $user->role === Role::SupervisorDistribusi && $user->depo_id) {
-            $table = $query->getModel()->getTable();
-            $query->where("{$table}.depo_id", $user->depo_id);
+        
+        // Selama user punya depo_id, kunci semua datanya ke depo tersebut
+        if ($user && $user->depo_id) {
+            $query->where('depo_id', $user->depo_id);
         }
-
-        return $query;
     }
 }

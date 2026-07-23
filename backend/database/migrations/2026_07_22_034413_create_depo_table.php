@@ -1,0 +1,38 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+public function up(): void
+{
+    Schema::create('depo', function (Blueprint $table) {
+        $table->id();
+        $table->string('name')->unique();
+        $table->text('address')->nullable();
+        $table->string('city')->nullable();
+        $table->string('postal_code', 20)->nullable();
+        $table->string('contact_person')->nullable();
+        $table->string('contact_phone')->nullable();
+        $table->timestamps();
+    });
+
+    // Pasang Foreign Key untuk tabel users setelah tabel depo selesai dibuat
+    Schema::table('users', function (Blueprint $table) {
+        $table->foreign('depo_id')->references('id')->on('depo')->onDelete('set null');
+    });
+}
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('depo');
+    }
+};

@@ -7,7 +7,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Depo extends Model
 {
-    protected $table = 'depo';
+    // Mengarahkan model ke nama tabel yang benar (tanpa huruf s di belakang)
+    protected $table = 'depo'; 
 
     protected $fillable = [
         'name', 'address', 'city', 'postal_code', 'contact_person', 'contact_phone',

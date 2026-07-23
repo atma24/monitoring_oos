@@ -12,19 +12,17 @@ class DepoController extends Controller
 {
     use FiltersByDepo;
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $paginated = Depo::orderBy('name')->paginate(20);
+        $query = Depo::query();
+        
+        // Jika user punya depo_id, dia cuma bisa lihat deponya sendiri di list
+        if ($request->user()->depo_id) {
+            $query->where('id', $request->user()->depo_id);
+        }
 
-        return response()->json([
-            'data' => $paginated->items(),
-            'meta' => [
-                'current_page' => $paginated->currentPage(),
-                'last_page' => $paginated->lastPage(),
-                'per_page' => $paginated->perPage(),
-                'total' => $paginated->total(),
-            ],
-        ]);
+        $depo = $query->orderBy('name')->get();
+        return response()->json(['data' => $depo]);
     }
 
     public function store(Request $request): JsonResponse
@@ -34,53 +32,19 @@ class DepoController extends Controller
             'address' => 'nullable|string',
             'city' => 'nullable|string|max:255',
             'postal_code' => 'nullable|string|max:20',
-            'contact_person' => 'nullable|string|max:255',
-            'contact_phone' => 'nullable|string|max:50',
         ]);
 
         $depo = Depo::create($validated);
-
-        return response()->json([
-            'data' => $depo,
-            'message' => 'Depo berhasil ditambahkan',
-        ], 201);
+        return response()->json(['data' => $depo, 'message' => 'Depo berhasil ditambahkan'], 201);
     }
 
     public function show(Request $request, Depo $depo): JsonResponse
     {
+        // Keamanan ketat: Tidak boleh mengintip depo lain lewat URL
         if ($request->user()->depo_id && $depo->id !== $request->user()->depo_id) {
-            abort(403);
+            return response()->json(['message' => 'Forbidden - Anda tidak memiliki akses ke depo ini.'], 403);
         }
-        return response()->json([
-            'data' => $depo,
-        ]);
-    }
-
-    public function update(Request $request, Depo $depo): JsonResponse
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:depo,name,' . $depo->id,
-            'address' => 'nullable|string',
-            'city' => 'nullable|string|max:255',
-            'postal_code' => 'nullable|string|max:20',
-            'contact_person' => 'nullable|string|max:255',
-            'contact_phone' => 'nullable|string|max:50',
-        ]);
-
-        $depo->update($validated);
-
-        return response()->json([
-            'data' => $depo,
-            'message' => 'Depo berhasil diupdate',
-        ]);
-    }
-
-    public function destroy(Depo $depo): JsonResponse
-    {
-        $depo->delete();
-
-        return response()->json([
-            'message' => 'Depo berhasil dihapus',
-        ]);
+        
+        return response()->json(['data' => $depo]);
     }
 }
