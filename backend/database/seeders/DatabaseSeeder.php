@@ -22,10 +22,18 @@ class DatabaseSeeder extends Seeder
 
         // 1. Akun Admin (Akses Penuh)
         User::create([
-            'name' => 'Admin Super',
-            'email' => 'admin@oos.com',
-            'password' => Hash::make('password123'),
+            'name' => 'admin9030',
+            'email' => 'admin9030@oos.com',
+            'password' => Hash::make('danone'),
             'role' => 'admin',
+            'depo_id' => $depo->id,
+        ]);
+
+        user::create([
+            'name' => 'kepala depo',
+            'email' => 'kepala dep@oos.com',
+            'password' => Hash::make('danone'),
+            'role' => 'kepala_depo',
             'depo_id' => $depo->id,
         ]);
 
@@ -33,7 +41,7 @@ class DatabaseSeeder extends Seeder
         User::create([
             'name' => 'Kepala Distribusi',
             'email' => 'kepala@oos.com',
-            'password' => Hash::make('password123'),
+            'password' => Hash::make('danone'),
             'role' => 'kepala_distribusi',
             'depo_id' => $depo->id,
         ]);
@@ -42,7 +50,7 @@ class DatabaseSeeder extends Seeder
         User::create([
             'name' => 'Supervisor Area',
             'email' => 'spv@oos.com',
-            'password' => Hash::make('password123'),
+            'password' => Hash::make('danone'),
             'role' => 'supervisor_distribusi',
             'depo_id' => $depo->id,
         ]);

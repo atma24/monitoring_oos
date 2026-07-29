@@ -2,8 +2,9 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  role: 'admin' | 'kepala_distribusi' | 'supervisor_distribusi';
+  role: 'admin' | 'kepala_depo' | 'kepala_distribusi' | 'supervisor_distribusi';
   depo_id: number | null;
+  depo?: Depo;
 }
 
 export interface Store {

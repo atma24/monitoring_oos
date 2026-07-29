@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import {
-  LayoutDashboard, Store, Package, Truck, Warehouse,
+  LayoutDashboard, Store, Package, Truck, Warehouse, Users,
 } from 'lucide-react';
 
 const navItems = [
@@ -15,6 +16,7 @@ const navItems = [
 ];
 
 export default function Sidebar() {
+  const { user } = useAuth();
   const pathname = usePathname();
 
   return (
@@ -44,6 +46,19 @@ export default function Sidebar() {
             </Link>
           );
         })}
+        {user?.role === 'admin' && (
+          <Link
+            href="/users"
+            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-colors ${
+              pathname === '/users'
+                ? 'bg-blue-50 text-blue-600'
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <Users className={`w-5 h-5 ${pathname === '/users' ? '' : 'opacity-50'}`} />
+            Users
+          </Link>
+        )}
       </nav>
     </aside>
   );

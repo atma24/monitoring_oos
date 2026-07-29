@@ -8,6 +8,7 @@ use App\Services\StoreImportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Exception;
+use App\Services\GeocodeService;
 
 class StoreController extends Controller
 {
@@ -161,5 +162,39 @@ class StoreController extends Controller
                 'message' => $e->getMessage()
             ], 500);
         }
+    }
+    // Jangan lupa tambahkan di atas: use App\Services\GeocodeService;
+
+    /**
+     * Memproses Geocoding untuk toko yang belum memiliki koordinat
+     */
+    public function processGeocoding(GeocodeService $geocodeService)
+    {
+        // Cari 1 toko terlama yang belum memiliki koordinat
+        // Kita proses 1 per 1 agar bisa dilacak progressnya oleh frontend
+        $store = Store::whereNull('latitude')
+                      ->orWhereNull('longitude')
+                      ->oldest()
+                      ->first();
+
+        if (!$store) {
+            return response()->json([
+                'status' => 'completed',
+                'message' => 'Semua toko sudah memiliki koordinat.'
+            ]);
+        }
+
+        $result = $geocodeService->geocodeStore($store);
+
+        // Hitung total sisa yang perlu diproses
+        $remaining = Store::whereNull('latitude')->orWhereNull('longitude')->count();
+        $total = Store::count();
+        
+        return response()->json([
+            'status' => 'processing',
+            'result' => $result,
+            'remaining' => $remaining,
+            'total' => $total
+        ]);
     }
 }

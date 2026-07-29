@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DepoController;
 use App\Http\Controllers\Api\StoreController;
+use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\StockRecordController;
 use App\Http\Controllers\Api\DeliveryStatusController;
@@ -30,26 +31,31 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Nanti rute GET untuk list stores bisa ditaruh di sini:
     // Route::get('stores', [StoreController::class, 'index']);
-    Route::middleware('role:admin,kepala_distribusi')->group(function () {
+    Route::middleware('role:admin')->group(function () {
+        Route::apiResource('users', UserController::class);
+    });
+
+Route::middleware('role:admin,kepala_depo,kepala_distribusi')->group(function () {
         // Modul Depo
         Route::post('depo', [DepoController::class, 'store']);
         Route::put('depo/{id}', [DepoController::class, 'update']);
         Route::delete('depo/{id}', [DepoController::class, 'destroy']);
         
         // Modul Stores
-        // Rute khusus upload harus diletakkan DI ATAS apiResource agar kata 'upload' tidak dianggap sebagai {id}
-        Route::apiResource('stores', StoreController::class);
+        // Rute custom/spesifik WAJIB di atas apiResource!
         Route::post('stores/upload', [StoreController::class, 'upload']);
-
+        Route::get('stores/geocode', [StoreController::class, 'processGeocoding']);
+        Route::apiResource('stores', StoreController::class); // <--- apiResource pindah ke paling bawah
+        
         // Modul Stock Records (OOS Preventif)
-        Route::post('stock-records', [StockRecordController::class, 'store']); // Garis miring dihapus!
-        Route::post('stock-records/upload', [StockRecordController::class, 'upload']); // Rute baru untuk Excel
+        Route::post('stock-records/upload', [StockRecordController::class, 'upload']); // Rute custom di atas
+        Route::post('stock-records', [StockRecordController::class, 'store']); 
         Route::put('stock-records/{id}', [StockRecordController::class, 'update']);
         Route::delete('stock-records/{id}', [StockRecordController::class, 'destroy']);
 
         // Modul Delivery Status (Adop)
+        Route::post('delivery-statuses/upload', [DeliveryStatusController::class, 'upload']); // Rute custom di atas
         Route::post('delivery-statuses', [DeliveryStatusController::class, 'store']);
-        Route::post('delivery-statuses/upload', [DeliveryStatusController::class, 'upload']);
         Route::put('delivery-statuses/{id}', [DeliveryStatusController::class, 'update']);
         Route::delete('delivery-statuses/{id}', [DeliveryStatusController::class, 'destroy']);
     });

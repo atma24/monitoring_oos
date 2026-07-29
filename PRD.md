@@ -75,8 +75,9 @@ monitoring_oos/
 - Output: jumlah toko terkirim vs belum terkirim
 
 ### 2.7 RBAC (Role Based Access Control)
-- **Admin** — full access + manage user
-- **Kepala Distribusi** — full access (no user management)
+- **Admin** — full access + manage user data terfilter berdasarkan `depo_id`
+- **Kepala Depo** - full access data terfilter berdasarkan `depo_id`
+- **Kepala Distribusi** — full access (no user management) data terfilter berdasarkan `depo_id`
 - **Supervisor Distribusi** — read-only, data terfilter berdasarkan `depo_id`
 
 ---
