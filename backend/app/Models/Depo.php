@@ -14,6 +14,7 @@ class Depo extends Model
     protected $table = 'depo';
 
     protected $fillable = [
+        'id',
         'name',
         'address',
         'city',

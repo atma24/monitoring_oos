@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import { useAuth } from "@/contexts/AuthContext";
 import { Package, Mail, Lock, ArrowRight, AlertCircle } from "lucide-react";
 
 export default function Login() {
@@ -10,8 +10,9 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  
+
   const router = useRouter();
+  const { login } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,27 +20,11 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:8000/api/login", {
-        email: email,
-        password: password,
-      });
-
-      // Misal struktur respons Laravel: { data: { token: "1|xxx...", user: {...} } }
-      // Sesuaikan 'response.data.data.token' dengan bentuk JSON dari AuthController kamu
-      const token = response.data.data?.token || response.data.token || response.data.access_token;
-      
-      if (token) {
-        // Simpan token ke brankas browser (localStorage)
-        localStorage.setItem("token", token);
-        // Lempar kembali ke halaman utama (Dashboard)
-        router.push("/");
-      } else {
-        setError("Token tidak ditemukan dari server.");
-      }
-      
-    } catch (err: any) {
-      // Tangkap pesan error dari Laravel (misal: "Email atau Password salah")
-      setError(err.response?.data?.message || "Terjadi kesalahan saat mencoba login.");
+      await login(email, password);
+      router.push("/dashboard");
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      setError(axiosErr.response?.data?.message || "Email atau password salah.");
     } finally {
       setLoading(false);
     }
@@ -47,12 +32,9 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-[#F3F6F9] flex items-center justify-center p-4 font-sans">
-      
       <div className="bg-white w-full max-w-md rounded-3xl shadow-sm p-8 relative overflow-hidden">
-        {/* Dekorasi Sudut */}
         <div className="absolute -top-16 -right-16 w-32 h-32 bg-blue-50 rounded-full opacity-50"></div>
-        
-        {/* Header Logo */}
+
         <div className="flex flex-col items-center mb-8 relative z-10">
           <div className="bg-blue-600 p-3 rounded-xl mb-4 shadow-sm">
             <Package className="text-white w-8 h-8" />
@@ -61,7 +43,6 @@ export default function Login() {
           <p className="text-sm text-gray-500 mt-1">Masuk ke Dasbor Spike OOS</p>
         </div>
 
-        {/* Notifikasi Error */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 rounded-xl flex items-start gap-3 border border-red-100">
             <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
@@ -69,10 +50,7 @@ export default function Login() {
           </div>
         )}
 
-        {/* Form Login */}
         <form onSubmit={handleLogin} className="space-y-5 relative z-10">
-          
-          {/* Input Email */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
             <div className="relative">
@@ -90,11 +68,9 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Input Password */}
           <div>
             <div className="flex justify-between items-center mb-2">
               <label className="block text-sm font-semibold text-gray-700">Password</label>
-              <a href="#" className="text-xs font-medium text-blue-600 hover:text-blue-700">Lupa sandi?</a>
             </div>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -111,7 +87,6 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Tombol Submit */}
           <button
             type="submit"
             disabled={loading}
@@ -122,10 +97,8 @@ export default function Login() {
             {loading ? "Memeriksa kredensial..." : "Masuk ke Dasbor"}
             {!loading && <ArrowRight className="w-4 h-4" />}
           </button>
-
         </form>
       </div>
-      
     </div>
   );
 }

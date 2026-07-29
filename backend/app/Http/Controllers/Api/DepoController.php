@@ -31,6 +31,7 @@ class DepoController extends Controller
     {
         // Validasi data masuk
         $validator = Validator::make($request->all(), [
+            'id'             => 'required|integer|unique:depo,id',
             'name'           => 'required|string|max:255|unique:depo,name',
             'address'        => 'nullable|string',
             'city'           => 'nullable|string|max:255',
@@ -96,6 +97,7 @@ class DepoController extends Controller
 
         // Validasi data masuk (Pengecualian unique untuk ID yang sedang diupdate)
         $validator = Validator::make($request->all(), [
+            'id'             => 'required|integer|unique:depo,id,' . $id,
             'name'           => 'required|string|max:255|unique:depo,name,' . $id,
             'address'        => 'nullable|string',
             'city'           => 'nullable|string|max:255',

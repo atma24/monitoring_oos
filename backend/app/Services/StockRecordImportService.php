@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\StockHistory;
 use App\Models\StockRecord;
 use App\Models\Store;
 use Exception;
@@ -88,6 +89,26 @@ class StockRecordImportService
                     'depo_id'        => $store->depo_id, 
                 ]
             );
+
+            StockHistory::create([
+                'store_id'       => $store->id,
+                'sap_id'         => $sapId,
+                'stockdate'      => $stockDate,
+                'og_urgent_date' => $ogUrgentDate,
+                'account'        => $this->getValue($row, $colIndex, 'account'),
+                'outlet_name'    => $this->getValue($row, $colIndex, 'outlet_name'),
+                'source'         => $this->getValue($row, $colIndex, 'source'),
+                'region'         => $this->getValue($row, $colIndex, 'region'),
+                'supplier'       => $this->getValue($row, $colIndex, 'supplier'),
+                'jwk'            => $this->getValue($row, $colIndex, 'jwk'),
+                'dsi'            => is_numeric($this->getValue($row, $colIndex, 'dsi'))
+                                    ? $this->getValue($row, $colIndex, 'dsi')
+                                    : 0,
+                'category'       => $this->getValue($row, $colIndex, 'category') ?: '-',
+                'depo_id'        => $store->depo_id,
+                'uploaded_by'    => auth()->id(),
+                'uploaded_at'    => now(),
+            ]);
         }
     }
 

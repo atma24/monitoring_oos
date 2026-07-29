@@ -3,26 +3,163 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Store;
 use App\Services\StoreImportService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Exception;
 
 class StoreController extends Controller
 {
-    public function upload(Request $request): JsonResponse
+    /**
+     * READ: Menampilkan semua data toko (bisa ditambah paginasi/pencarian nanti)
+     */
+    public function index()
     {
-        $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+        // Mengambil semua toko beserta nama deponya
+        $stores = Store::with('depo')->latest()->get();
+        
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Data master toko berhasil diambil',
+            'data'    => $stores
+        ], 200);
+    }
+
+    /**
+     * CREATE: Menambah satu toko baru secara manual
+     */
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'sap_id'    => 'required|unique:stores,sap_id',
+            'depo_id'   => 'required|exists:depos,id',
+            'name'      => 'required|string|max:255',
+            'type'      => 'nullable|string',
+            'city'      => 'nullable|string',
         ]);
 
-        $depoId = $request->user()->depo_id;
+        if ($validator->fails()) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Validasi gagal',
+                'errors'  => $validator->errors()
+            ], 422);
+        }
 
-        $service = new StoreImportService();
-        $result = $service->import($request->file('file'), $depoId);
+        $store = Store::create($request->all());
 
         return response()->json([
-            'message' => "Upload antrean selesai. Berhasil: {$result['success']}, Gagal: {$result['failed']}",
-            'data' => $result,
+            'status'  => 'success',
+            'message' => 'Toko baru berhasil ditambahkan',
+            'data'    => $store
+        ], 201);
+    }
+
+    /**
+     * READ ONE: Menampilkan detail satu toko
+     */
+    public function show($id)
+    {
+        $store = Store::with('depo')->find($id);
+
+        if (!$store) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Toko tidak ditemukan'
+            ], 404);
+        }
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Detail toko berhasil diambil',
+            'data'    => $store
+        ], 200);
+    }
+
+    /**
+     * UPDATE: Mengedit data toko
+     */
+    public function update(Request $request, $id)
+    {
+        $store = Store::find($id);
+
+        if (!$store) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Toko tidak ditemukan'
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'sap_id'    => 'sometimes|required|unique:stores,sap_id,' . $store->id,
+            'depo_id'   => 'sometimes|required|exists:depos,id',
+            'name'      => 'sometimes|required|string|max:255',
+            'type'      => 'nullable|string',
+            'city'      => 'nullable|string',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Validasi gagal',
+                'errors'  => $validator->errors()
+            ], 422);
+        }
+
+        $store->update($request->all());
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Data toko berhasil diperbarui',
+            'data'    => $store
+        ], 200);
+    }
+
+    /**
+     * DELETE: Menghapus toko
+     */
+    public function destroy($id)
+    {
+        $store = Store::find($id);
+
+        if (!$store) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Toko tidak ditemukan'
+            ], 404);
+        }
+
+        $store->delete();
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Data toko berhasil dihapus'
+        ], 200);
+    }
+
+    /**
+     * UPLOAD: Import massal via Excel (Fungsi yang sudah kita buat sebelumnya)
+     */
+    public function upload(Request $request, StoreImportService $importService)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,csv|max:5120',
+        ]);
+
+        try {
+            $importService->import($request->file('file'), $request->user()->depo_id);
+
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Data Master Toko berhasil di-import!',
+            ], 200);
+            
+        } catch (Exception $e) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }

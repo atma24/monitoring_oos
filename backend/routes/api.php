@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\StockRecordController;
 use App\Http\Controllers\Api\DeliveryStatusController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\StockHistoryController;
 // Rute Publik
 Route::post('login', [AuthController::class, 'login']);
 
@@ -23,6 +24,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('delivery-statuses', [DeliveryStatusController::class, 'index']);
     Route::get('delivery-statuses/{id}', [DeliveryStatusController::class, 'show']);
 
+    Route::get('stock-histories', [StockHistoryController::class, 'index']);
+    Route::get('stock-histories/stats', [StockHistoryController::class, 'stats']);
+
 
     // Nanti rute GET untuk list stores bisa ditaruh di sini:
     // Route::get('stores', [StoreController::class, 'index']);
@@ -33,6 +37,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('depo/{id}', [DepoController::class, 'destroy']);
         
         // Modul Stores
+        // Rute khusus upload harus diletakkan DI ATAS apiResource agar kata 'upload' tidak dianggap sebagai {id}
+        Route::apiResource('stores', StoreController::class);
         Route::post('stores/upload', [StoreController::class, 'upload']);
 
         // Modul Stock Records (OOS Preventif)
